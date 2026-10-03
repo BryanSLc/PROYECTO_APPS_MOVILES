@@ -1,0 +1,94 @@
+KILO - APP DE GESTIÓN DE MANTENIMIENTO VEHICULAR
+================================================
+
+DESCRIPCIÓN
+-----------
+Kilo es una aplicación Android para llevar el control del mantenimiento
+de uno o varios vehículos. El usuario registra el kilometraje y la app
+indica qué piezas están al día, cuáles se acercan a su cambio y cuáles
+ya están vencidas.
+
+Un mantenimiento vence por kilometraje o por tiempo, lo que ocurra primero.
+
+
+FUNCIONES PRINCIPALES
+---------------------
+- Registro de vehículos: marca, modelo, año, placa, kilometraje y tipo.
+- Gestión de varios vehículos: seleccionar el activo o eliminarlo.
+- Actualización del kilometraje (no admite valores menores al actual).
+- Estado de cada pieza por colores:
+    Rojo   = Vencido   (100 % o más del intervalo)
+    Ámbar  = Próximo   (80 % a 99 %)
+    Verde  = Al día    (menos de 80 %)
+    Gris   = Sin datos (sin registro previo)
+- Filtros por estado: al tocar una categoría se muestran solo sus piezas.
+- Detalle de cada mantenimiento: intervalo, avance y próximo cambio
+  en kilómetros y en fecha.
+- Registro de mantenimientos realizados: tipo, fecha, kilometraje y nota.
+- Historial completo con filtro por tipo y opción de eliminar registros.
+- Configuración: notificaciones y unidad de distancia (km / mi).
+
+
+MANTENIMIENTOS INCLUIDOS
+------------------------
+Pieza               Intervalo km    Intervalo tiempo
+Aceite del motor    10 000 km       6 meses
+Filtro de aceite    10 000 km       6 meses
+Llantas             40 000 km       24 meses
+Frenos              20 000 km       12 meses
+Batería             60 000 km       36 meses
+
+
+CÁLCULO DEL PRÓXIMO CAMBIO
+--------------------------
+Próximo cambio (km)    = km del último cambio + intervalo en km
+Próximo cambio (fecha) = fecha del último cambio + intervalo en meses
+
+Al actualizar el kilometraje se recalcula el avance:
+  avance por km     = (km actual - km del último cambio) / intervalo km
+  avance por tiempo = días transcurridos / días del intervalo
+Se toma el mayor de los dos para definir el estado.
+
+
+TECNOLOGÍAS
+-----------
+- Lenguaje: Kotlin
+- Interfaz: Jetpack Compose + Material 3
+- Arquitectura: MVVM (Vista - ViewModel - Repositorio - Datos)
+- Base de datos local: Room (SQLite)
+- Preferencias: DataStore
+- Navegación: Navigation Compose
+
+
+BASE DE DATOS
+-------------
+- vehiculos                 (tabla maestra)
+- tipos_mantenimiento       (tabla maestra, precargada)
+- registros_mantenimiento   (tabla transaccional / historial)
+
+CRUD completo: crear, consultar, actualizar y eliminar.
+Todos los datos se guardan en el teléfono; no requiere internet.
+
+
+REQUISITOS
+----------
+- Android 8.0 (API 26) o superior
+- Android Studio Koala o superior
+- JDK 17 o 21
+
+
+CÓMO EJECUTAR
+-------------
+1. Descomprimir el proyecto en una ruta sin acentos ni espacios
+   (ejemplo: C:\Proyectos\Kilo).
+2. Abrir la carpeta en Android Studio (File > Open).
+3. En Settings > Build Tools > Gradle, elegir JDK 17 o 21.
+4. Esperar la sincronización de Gradle.
+5. Ejecutar en un emulador o dispositivo con Android 8.0 o superior.
+
+
+PENDIENTES
+----------
+- Programar las notificaciones (actualmente solo se guarda la preferencia).
+- Lectura del odómetro con la cámara.
+- Pruebas con usuarios.
