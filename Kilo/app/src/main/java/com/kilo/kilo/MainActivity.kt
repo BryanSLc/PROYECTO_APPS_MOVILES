@@ -6,7 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.kilo.kilo.ui.configuracion.ConfiguracionScreen
 import com.kilo.kilo.ui.historial.HistorialScreen
-import com.kilo.kilo.ui.pantallas.InicioPantalla
+import com.kilo.kilo.ui.inicio.InicioPantalla
 import com.kilo.kilo.ui.theme.KiloTheme
 import dagger.hilt.android.AndroidEntryPoint
 

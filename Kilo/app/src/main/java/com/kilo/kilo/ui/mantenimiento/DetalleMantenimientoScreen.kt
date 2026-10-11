@@ -1,6 +1,6 @@
 package com.kilo.kilo.ui.mantenimiento
 
-import com.kilo.kilo.ui.inicio.EstadoPieza
+import com.kilo.kilo.ui.piezasporcategorias.EstadoPieza
 
 data class RegistroDetalle(val km: String, val detalle: String)
 

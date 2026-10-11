@@ -1,4 +1,4 @@
-package com.kilo.kilo.ui.inicio
+package com.kilo.kilo.ui.piezasporcategorias
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

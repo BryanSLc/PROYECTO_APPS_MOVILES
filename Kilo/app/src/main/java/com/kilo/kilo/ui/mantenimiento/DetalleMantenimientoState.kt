@@ -1,5 +1,7 @@
 package com.kilo.kilo.ui.mantenimiento
 
+import com.kilo.kilo.ui.registrarmantenimiento.RegistrarMantenimiento
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -93,20 +95,16 @@ fun DetalleMantenimientoContent(
             )
 
             Spacer(Modifier.height(14.dp))
-
             Text(state.titulo, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = Tinta)
             Text(state.intervalo, fontSize = 12.sp, color = TintaSuave)
 
             Spacer(Modifier.height(16.dp))
-
             TarjetaEstado(state)
 
             Spacer(Modifier.height(14.dp))
-
             TarjetaHistorial(state.historial)
 
             Spacer(Modifier.height(18.dp))
-
             Button(
                 onClick = onMarcarRealizado,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -136,7 +134,6 @@ private fun TarjetaEstado(state: DetalleMantenimientoState) {
         }
 
         Spacer(Modifier.height(12.dp))
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,7 +157,6 @@ private fun TarjetaEstado(state: DetalleMantenimientoState) {
         }
 
         Spacer(Modifier.height(14.dp))
-
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             DatoCaja("Próximo cambio", state.proximoCambio, Modifier.weight(1f))
             DatoCaja("O antes de", state.fechaLimite, Modifier.weight(1f))
@@ -191,9 +187,7 @@ private fun TarjetaHistorial(historial: List<RegistroDetalle>) {
             .padding(16.dp)
     ) {
         Text("Historial", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Tinta)
-
         Spacer(Modifier.height(12.dp))
-
         historial.forEachIndexed { i, registro ->
             FilaHistorial(registro, esUltima = i == historial.lastIndex)
         }
@@ -218,9 +212,7 @@ private fun FilaHistorial(registro: RegistroDetalle, esUltima: Boolean) {
                 Box(Modifier.weight(1f).width(1.dp).background(Borde))
             }
         }
-
         Spacer(Modifier.width(12.dp))
-
         Column(modifier = Modifier.padding(bottom = if (esUltima) 0.dp else 16.dp)) {
             Text(registro.km, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Tinta)
             Text(registro.detalle, fontSize = 11.sp, color = TintaSuave)
@@ -228,7 +220,7 @@ private fun FilaHistorial(registro: RegistroDetalle, esUltima: Boolean) {
     }
 }
 
-
+// Si ya tienen una barra inferior común, reemplaza esta por esa.
 @Composable
 private fun BarraInferior() {
     NavigationBar(containerColor = Superficie) {

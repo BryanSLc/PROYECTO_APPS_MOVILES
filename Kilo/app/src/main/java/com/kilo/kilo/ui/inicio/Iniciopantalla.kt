@@ -1,5 +1,10 @@
 package com.kilo.kilo.ui.inicio
 
+import com.kilo.kilo.ui.piezasporcategorias.EstadoPieza
+import com.kilo.kilo.ui.piezasporcategorias.PiezaResumen
+import com.kilo.kilo.ui.piezasporcategorias.PiezasPorCategorias
+import com.kilo.kilo.ui.piezasporcategorias.PiezasPorCategoriasViewModel
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.kilo.kilo.ui.piezasporcategorias.EstadoPieza
 import com.kilo.kilo.ui.theme.*
 
 
@@ -86,7 +90,9 @@ fun InicioPantalla(
         }
     )
 
+
     PiezasPorCategorias(onPiezaClick = onPiezaClick)
+
 
 }
 
@@ -136,7 +142,6 @@ fun InicioContent(
         }
     }
 }
-
 
 
 @Composable
@@ -260,6 +265,7 @@ private fun CabeceraMantenimientos(onVerHistorial: () -> Unit) {
 }
 
 
+
 @Composable
 private fun TarjetaEstado(
     resumen: ResumenEstado,
@@ -364,4 +370,4 @@ private fun InicioPantallaPreview() {
             onPestanaClick = {}
         )
     }
-}s
+}

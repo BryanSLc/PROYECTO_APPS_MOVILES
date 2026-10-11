@@ -10,7 +10,7 @@ import com.kilo.kilo.ui.theme.RojoVencidoFondo
 import com.kilo.kilo.ui.theme.VerdeAlDia
 import com.kilo.kilo.ui.theme.VerdeAlDiaFondo
 
-
+/** Los 4 estados del dashboard. */
 enum class EstadoPieza(
     val titulo: String,
     val descripcion: String,
@@ -25,7 +25,7 @@ enum class EstadoPieza(
 
 data class PiezaResumen(val nombre: String, val detalle: String)
 
-
+// Datos de ejemplo del boceto
 val piezasDeEjemplo: Map<EstadoPieza, List<PiezaResumen>> = mapOf(
     EstadoPieza.VENCIDOS to listOf(PiezaResumen("Filtro de aceite", "2,450 km de retraso")),
     EstadoPieza.PROXIMOS to listOf(PiezaResumen("Aceite del motor", "Faltan 1,550 km")),
