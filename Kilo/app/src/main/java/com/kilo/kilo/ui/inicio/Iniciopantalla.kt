@@ -1,7 +1,8 @@
-package com.kilo.kilo.ui.pantallas
+package com.kilo.kilo.ui.inicio
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,26 +36,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.theme.*
 
-/** Datos de cada tarjeta de estado (Vencidos, Próximos, Al día, Sin datos). */
-private data class ResumenEstado(
-    val etiqueta: String,
-    val cantidad: Int,
-    val tinta: Color,
-    val fondo: Color
-)
 
-/** Pestañas de la barra inferior. */
 private data class Pestana(val etiqueta: String, val icono: ImageVector)
 
 private val PESTANAS = listOf(
@@ -63,19 +58,49 @@ private val PESTANAS = listOf(
     Pestana("Ajustes", Icons.Rounded.Settings)
 )
 
+
 @Composable
-fun InicioPantalla() {
-    // Datos de ejemplo (más adelante vendrán del ViewModel / base de datos).
-    val resumenes = listOf(
-        ResumenEstado("Vencidos", 1, RojoVencido, RojoVencidoFondo),
-        ResumenEstado("Próximos", 1, AmbarProximo, AmbarProximoFondo),
-        ResumenEstado("Al día", 2, VerdeAlDia, VerdeAlDiaFondo),
-        ResumenEstado("Sin datos", 1, GrisSinDatos, GrisSinDatosFondo)
+fun InicioPantalla(
+    onVerHistorial: () -> Unit = {},
+    onCambiarVehiculo: () -> Unit = {},
+    onIrAVehiculos: () -> Unit = {},
+    onIrAAjustes: () -> Unit = {},
+    onPiezaClick: (PiezaResumen) -> Unit = {},
+    viewModel: InicioViewModel = hiltViewModel(),
+    piezasViewModel: PiezasPorCategoriasViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+    InicioContent(
+        state = state,
+        onCambiarVehiculo = onCambiarVehiculo,
+        onActualizarKm = viewModel::onActualizarKmClick,
+        onVerHistorial = onVerHistorial,
+        onTarjetaClick = piezasViewModel::onTarjetaClick,
+        onPestanaClick = { indice ->
+            when (indice) {
+                1 -> onIrAVehiculos()
+                2 -> onIrAAjustes()
+            }
+        }
     )
 
+    PiezasPorCategorias(onPiezaClick = onPiezaClick)
+
+}
+
+@Composable
+fun InicioContent(
+    state: InicioState,
+    onCambiarVehiculo: () -> Unit,
+    onActualizarKm: () -> Unit,
+    onVerHistorial: () -> Unit,
+    onTarjetaClick: (EstadoPieza) -> Unit,
+    onPestanaClick: (Int) -> Unit
+) {
     Scaffold(
         containerColor = Fondo,
-        bottomBar = { BarraInferior(seleccionada = 0) }
+        bottomBar = { BarraInferior(seleccionada = 0, onPestanaClick = onPestanaClick) }
     ) { relleno ->
         Column(
             modifier = Modifier
@@ -85,22 +110,25 @@ fun InicioPantalla() {
                 .padding(horizontal = 18.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Encabezado(nombreUsuario = "Andrea")
+            Encabezado(nombreUsuario = state.nombreUsuario)
 
             TarjetaVehiculo(
-                nombre = "Mazda 3 2019",
-                placa = "PBX-482",
-                carroceria = "Sedán",
-                kilometraje = "68,450 km"
+                vehiculo = state.vehiculo,
+                onCambiar = onCambiarVehiculo,
+                onActualizarKm = onActualizarKm
             )
 
-            CabeceraMantenimientos()
+            CabeceraMantenimientos(onVerHistorial)
 
             // Rejilla de 2 x 2
-            resumenes.chunked(2).forEach { fila ->
+            state.resumenes.chunked(2).forEach { fila ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     fila.forEach { resumen ->
-                        TarjetaEstado(resumen, Modifier.weight(1f))
+                        TarjetaEstado(
+                            resumen = resumen,
+                            onClick = { onTarjetaClick(resumen.estado) },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
@@ -108,7 +136,7 @@ fun InicioPantalla() {
     }
 }
 
-// ---------------------------------------------------------------- Encabezado
+
 
 @Composable
 private fun Encabezado(nombreUsuario: String) {
@@ -126,14 +154,13 @@ private fun Encabezado(nombreUsuario: String) {
     }
 }
 
-// ---------------------------------------------------------- Tarjeta vehículo
+
 
 @Composable
 private fun TarjetaVehiculo(
-    nombre: String,
-    placa: String,
-    carroceria: String,
-    kilometraje: String
+    vehiculo: VehiculoResumen,
+    onCambiar: () -> Unit,
+    onActualizarKm: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -144,7 +171,6 @@ private fun TarjetaVehiculo(
             modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Fila superior: imagen, nombre y botón Cambiar
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
@@ -167,20 +193,19 @@ private fun TarjetaVehiculo(
                         .weight(1f)
                         .padding(start = 14.dp)
                 ) {
-                    Text(nombre, style = MaterialTheme.typography.titleMedium, color = Tinta)
+                    Text(vehiculo.nombre, style = MaterialTheme.typography.titleMedium, color = Tinta)
                     Text(
-                        text = "$placa · $carroceria",
+                        text = "${vehiculo.placa} · ${vehiculo.carroceria}",
                         style = MaterialTheme.typography.bodySmall,
                         color = TintaSuave
                     )
                 }
 
-                TextButton(onClick = { /* Sin función por ahora */ }) {
+                TextButton(onClick = onCambiar) {
                     Text("Cambiar", color = Morado, style = MaterialTheme.typography.labelMedium)
                 }
             }
 
-            // Fila inferior: kilometraje y botón Actualizar km
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text(
@@ -189,7 +214,7 @@ private fun TarjetaVehiculo(
                         color = TintaSuave
                     )
                     Text(
-                        text = kilometraje,
+                        text = vehiculo.kilometraje,
                         fontSize = 29.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = (-1).sp,
@@ -198,7 +223,7 @@ private fun TarjetaVehiculo(
                 }
 
                 Button(
-                    onClick = { /* Sin función por ahora */ },
+                    onClick = onActualizarKm,
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Morado,
@@ -213,10 +238,10 @@ private fun TarjetaVehiculo(
     }
 }
 
-// ------------------------------------------------- Cabecera de la sección
+
 
 @Composable
-private fun CabeceraMantenimientos() {
+private fun CabeceraMantenimientos(onVerHistorial: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -227,28 +252,35 @@ private fun CabeceraMantenimientos() {
             color = TintaMedia,
             modifier = Modifier.weight(1f)
         )
-        TextButton(onClick = { /* Sin función por ahora */ }) {
+        TextButton(onClick = onVerHistorial) {
             Text("Ver historial", color = Morado, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
 
-// ------------------------------------------------------- Tarjeta de estado
 
 @Composable
-private fun TarjetaEstado(resumen: ResumenEstado, modifier: Modifier = Modifier) {
+private fun TarjetaEstado(
+    resumen: ResumenEstado,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val tinta = resumen.estado.tinta
+    val fondo = resumen.estado.fondo
+
     Card(
-        modifier = modifier,
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = Superficie),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.padding(14.dp)) {
-            // Chip con punto de color
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(resumen.fondo)
+                    .background(fondo)
                     .padding(horizontal = 9.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -256,15 +288,14 @@ private fun TarjetaEstado(resumen: ResumenEstado, modifier: Modifier = Modifier)
                     Modifier
                         .size(6.dp)
                         .clip(CircleShape)
-                        .background(resumen.tinta)
+                        .background(tinta)
                 )
                 Spacer(Modifier.width(6.dp))
-                Text(resumen.etiqueta, style = MaterialTheme.typography.labelSmall, color = resumen.tinta)
+                Text(resumen.estado.titulo, style = MaterialTheme.typography.labelSmall, color = tinta)
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // Cantidad + "pieza(s)" + flecha
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
                     text = resumen.cantidad.toString(),
@@ -284,25 +315,25 @@ private fun TarjetaEstado(resumen: ResumenEstado, modifier: Modifier = Modifier)
                     modifier = Modifier
                         .size(26.dp)
                         .clip(CircleShape)
-                        .background(resumen.fondo),
+                        .background(fondo),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("›", color = resumen.tinta, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("›", color = tinta, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
     }
 }
 
-// --------------------------------------------------------- Barra inferior
+
 
 @Composable
-private fun BarraInferior(seleccionada: Int) {
+private fun BarraInferior(seleccionada: Int, onPestanaClick: (Int) -> Unit) {
     NavigationBar(containerColor = Superficie) {
         PESTANAS.forEachIndexed { indice, pestana ->
             NavigationBarItem(
                 selected = indice == seleccionada,
-                onClick = { /* Sin navegación por ahora */ },
+                onClick = { onPestanaClick(indice) },
                 icon = { Icon(pestana.icono, contentDescription = pestana.etiqueta) },
                 label = { Text(pestana.etiqueta, style = MaterialTheme.typography.labelSmall) },
                 colors = NavigationBarItemDefaults.colors(
@@ -317,12 +348,19 @@ private fun BarraInferior(seleccionada: Int) {
     }
 }
 
-// ------------------------------------------------------------------ Preview
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun InicioPantallaPreview() {
     KiloTheme {
-        InicioPantalla()
+        InicioContent(
+            state = InicioState(),
+            onCambiarVehiculo = {},
+            onActualizarKm = {},
+            onVerHistorial = {},
+            onTarjetaClick = {},
+            onPestanaClick = {}
+        )
     }
-}
+}s
