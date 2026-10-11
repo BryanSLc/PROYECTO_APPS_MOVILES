@@ -14,7 +14,7 @@ class PiezasPorCategoriasViewModel @Inject constructor() : ViewModel() {
     private val _state = MutableStateFlow(PiezasPorCategoriasState())
     val state: StateFlow<PiezasPorCategoriasState> = _state.asStateFlow()
 
-    /** Se llama desde cada una de las 4 tarjetas del dashboard. */
+
     fun onTarjetaClick(estado: EstadoPieza) {
         _state.update { it.copy(estadoAbierto = estado) }
     }

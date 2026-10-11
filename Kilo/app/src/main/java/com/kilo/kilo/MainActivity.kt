@@ -4,9 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.kilo.kilo.ui.configuracion.ConfiguracionScreen
-import com.kilo.kilo.ui.historial.HistorialScreen
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import com.kilo.kilo.ui.inicio.InicioPantalla
+import com.kilo.kilo.ui.splash.SplashScreen
 import com.kilo.kilo.ui.theme.KiloTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,7 +21,14 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KiloTheme {
-                HistorialScreen()
+                // true = se muestra el Splash; pasa a false cuando termina de cargar
+                var mostrarSplash by rememberSaveable { mutableStateOf(true) }
+
+                if (mostrarSplash) {
+                    SplashScreen(onTerminar = { mostrarSplash = false })
+                } else {
+                    InicioPantalla()
+                }
             }
         }
     }
