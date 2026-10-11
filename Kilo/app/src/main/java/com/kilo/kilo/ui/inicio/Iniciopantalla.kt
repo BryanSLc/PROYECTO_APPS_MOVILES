@@ -4,6 +4,7 @@ import com.kilo.kilo.ui.piezasporcategorias.EstadoPieza
 import com.kilo.kilo.ui.piezasporcategorias.PiezaResumen
 import com.kilo.kilo.ui.piezasporcategorias.PiezasPorCategorias
 import com.kilo.kilo.ui.piezasporcategorias.PiezasPorCategoriasViewModel
+import com.kilo.kilo.ui.actualizar_km.ActualizarKmBottomSheet
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -54,7 +55,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.theme.*
 
-
+/** Pestañas de la barra inferior. */
 private data class Pestana(val etiqueta: String, val icono: ImageVector)
 
 private val PESTANAS = listOf(
@@ -63,7 +64,10 @@ private val PESTANAS = listOf(
     Pestana("Ajustes", Icons.Rounded.Settings)
 )
 
-
+/**
+ * Pantalla conectada a los ViewModels.
+ * Los callbacks de navegación (pantallas completas) los decide quien arma la navegación.
+ */
 @Composable
 fun InicioPantalla(
     onVerHistorial: () -> Unit = {},
@@ -90,10 +94,18 @@ fun InicioPantalla(
         }
     )
 
+    // Hoja flotante: se muestra sola cuando el ViewModel tiene un estado abierto
+    PiezasPorCategorias(
+        onPiezaClick = { pieza ->
+            piezasViewModel.onCerrar() // cierra la hoja antes de cambiar de pantalla
+            onPiezaClick(pieza)
+        }
+    )
 
-    PiezasPorCategorias(onPiezaClick = onPiezaClick)
-
-
+    // Hoja "Actualizar kilometraje": se abre con el botón "Actualizar km"
+    if (state.mostrarActualizarKm) {
+        ActualizarKmBottomSheet(onDismiss = viewModel::onActualizarKmCerrar)
+    }
 }
 
 @Composable
@@ -143,6 +155,7 @@ fun InicioContent(
     }
 }
 
+// ---------------------------------------------------------------- Encabezado
 
 @Composable
 private fun Encabezado(nombreUsuario: String) {
@@ -160,7 +173,7 @@ private fun Encabezado(nombreUsuario: String) {
     }
 }
 
-
+// ---------------------------------------------------------- Tarjeta vehículo
 
 @Composable
 private fun TarjetaVehiculo(
@@ -244,7 +257,7 @@ private fun TarjetaVehiculo(
     }
 }
 
-
+// ------------------------------------------------- Cabecera de la sección
 
 @Composable
 private fun CabeceraMantenimientos(onVerHistorial: () -> Unit) {
@@ -264,7 +277,7 @@ private fun CabeceraMantenimientos(onVerHistorial: () -> Unit) {
     }
 }
 
-
+// ------------------------------------------------------- Tarjeta de estado
 
 @Composable
 private fun TarjetaEstado(
@@ -332,7 +345,7 @@ private fun TarjetaEstado(
     }
 }
 
-
+// --------------------------------------------------------- Barra inferior
 
 @Composable
 private fun BarraInferior(seleccionada: Int, onPestanaClick: (Int) -> Unit) {
@@ -355,7 +368,7 @@ private fun BarraInferior(seleccionada: Int, onPestanaClick: (Int) -> Unit) {
     }
 }
 
-
+// ------------------------------------------------------------------ Preview
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
