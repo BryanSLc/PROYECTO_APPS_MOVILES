@@ -22,6 +22,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -59,11 +61,14 @@ class MainActivity : ComponentActivity() {
 private object Rutas {
     const val SPLASH = "splash"
     const val INICIO = "inicio"
-    const val DETALLE = "detalle_mantenimiento"
+    const val DETALLE = "detalle_mantenimiento/{tipo}"
     const val HISTORIAL = "historial"
     const val VEHICULOS = "mis_vehiculos"
     const val AGREGAR_VEHICULO = "agregar_vehiculo"
     const val AJUSTES = "configuracion"
+
+    /** Ruta del Detalle de una pieza concreta, por ejemplo detalle_mantenimiento/FILTRO */
+    fun detalle(clave: String) = "detalle_mantenimiento/$clave"
 }
 
 /** Pestañas de la barra inferior. */
@@ -135,11 +140,14 @@ private fun KiloNavHost() {
                     onCambiarVehiculo = { irATab(navController, Rutas.VEHICULOS) },
                     onIrAVehiculos = { irATab(navController, Rutas.VEHICULOS) },
                     onIrAAjustes = { irATab(navController, Rutas.AJUSTES) },
-                    onPiezaClick = { navController.navigate(Rutas.DETALLE) }
+                    onPiezaClick = { pieza -> navController.navigate(Rutas.detalle(pieza.clave)) }
                 )
             }
 
-            composable(Rutas.DETALLE) {
+            composable(
+                route = Rutas.DETALLE,
+                arguments = listOf(navArgument("tipo") { type = NavType.StringType })
+            ) {
                 DetalleMantenimientoScreen(
                     onVolver = { navController.popBackStack() },
                     onPestanaClick = { indice -> irAPestana(navController, indice) }

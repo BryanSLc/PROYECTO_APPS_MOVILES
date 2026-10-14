@@ -52,8 +52,7 @@ fun ActualizarKmBottomSheet(
                 onDismiss()
             },
             onConfirmar = {
-                viewModel.onConfirmar()
-                onDismiss()
+                if (viewModel.onConfirmar()) onDismiss()
             }
         )
     }
@@ -103,8 +102,17 @@ fun ActualizarKmContent(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.End
             ),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            isError = state.error != null
         )
+
+        state.error?.let { mensaje ->
+            Text(
+                text = mensaje,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

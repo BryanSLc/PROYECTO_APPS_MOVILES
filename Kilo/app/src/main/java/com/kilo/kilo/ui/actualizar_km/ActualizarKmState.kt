@@ -3,7 +3,8 @@ package com.kilo.kilo.ui.actualizar_km
 data class ActualizarKmState(
     val vehiculo: String = "",
     val kmActual: Int = 0,
-    val kmNuevo: String = ""
+    val kmNuevo: String = "",
+    val error: String? = null
 ) {
     val puedeConfirmar: Boolean
         get() = kmNuevo.isNotBlank()

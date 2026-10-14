@@ -1,6 +1,7 @@
 package com.kilo.kilo.ui.piezasporcategorias
 
 import androidx.compose.ui.graphics.Color
+import com.kilo.kilo.data.Situacion
 import com.kilo.kilo.ui.theme.AmbarProximo
 import com.kilo.kilo.ui.theme.AmbarProximoFondo
 import com.kilo.kilo.ui.theme.GrisSinDatos
@@ -23,15 +24,24 @@ enum class EstadoPieza(
     SIN_DATOS("Sin datos", "Aún no tienen un mantenimiento registrado.", GrisSinDatos, GrisSinDatosFondo)
 }
 
-data class PiezaResumen(val nombre: String, val detalle: String)
+/** Une el resultado del cálculo (Situacion) con la categoría que se dibuja (EstadoPieza). */
+fun Situacion.aEstadoPieza(): EstadoPieza = when (this) {
+    Situacion.VENCIDO -> EstadoPieza.VENCIDOS
+    Situacion.PROXIMO -> EstadoPieza.PROXIMOS
+    Situacion.AL_DIA -> EstadoPieza.AL_DIA
+    Situacion.SIN_DATOS -> EstadoPieza.SIN_DATOS
+}
 
-// Datos de ejemplo del boceto
+/** [clave] identifica la pieza (TipoPieza.name) para abrir su Detalle al tocarla. */
+data class PiezaResumen(val nombre: String, val detalle: String, val clave: String = "")
+
+// Datos de ejemplo, solo para el @Preview
 val piezasDeEjemplo: Map<EstadoPieza, List<PiezaResumen>> = mapOf(
     EstadoPieza.VENCIDOS to listOf(PiezaResumen("Filtro de aceite", "2,450 km de retraso")),
     EstadoPieza.PROXIMOS to listOf(PiezaResumen("Aceite del motor", "Faltan 1,550 km")),
     EstadoPieza.AL_DIA to listOf(
-        PiezaResumen("Llantas", "Faltan 12,000 km"),
-        PiezaResumen("Frenos", "Faltan 8,300 km")
+        PiezaResumen("Llantas", "Faltan 19,550 km"),
+        PiezaResumen("Frenos", "Faltan 16,550 km")
     ),
     EstadoPieza.SIN_DATOS to listOf(PiezaResumen("Batería", "Sin registro"))
 )

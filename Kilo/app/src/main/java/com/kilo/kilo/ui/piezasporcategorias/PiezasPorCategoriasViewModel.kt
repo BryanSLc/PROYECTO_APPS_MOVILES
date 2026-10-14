@@ -1,25 +1,48 @@
 package com.kilo.kilo.ui.piezasporcategorias
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kilo.kilo.data.CalculoMantenimiento
+import com.kilo.kilo.data.DatosKilo
+import com.kilo.kilo.data.KiloRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class PiezasPorCategoriasViewModel @Inject constructor() : ViewModel() {
+class PiezasPorCategoriasViewModel @Inject constructor(
+    repositorio: KiloRepository
+) : ViewModel() {
 
-    private val _state = MutableStateFlow(PiezasPorCategoriasState())
-    val state: StateFlow<PiezasPorCategoriasState> = _state.asStateFlow()
+    private val estadoAbierto = MutableStateFlow<EstadoPieza?>(null)
 
+    val state: StateFlow<PiezasPorCategoriasState> = combine(
+        repositorio.datos,
+        estadoAbierto
+    ) { datos, abierto -> PiezasPorCategoriasState(abierto, agrupar(datos)) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = PiezasPorCategoriasState(null, agrupar(repositorio.datos.value))
+        )
 
     fun onTarjetaClick(estado: EstadoPieza) {
-        _state.update { it.copy(estadoAbierto = estado) }
+        estadoAbierto.value = estado
     }
 
     fun onCerrar() {
-        _state.update { it.copy(estadoAbierto = null) }
+        estadoAbierto.value = null
+    }
+}
+
+/** Reparte las 5 piezas en las 4 categorías según el cálculo. */
+private fun agrupar(datos: DatosKilo): Map<EstadoPieza, List<PiezaResumen>> {
+    val porEstado = CalculoMantenimiento.estadosDe(datos).groupBy { it.situacion.aEstadoPieza() }
+    return EstadoPieza.values().associateWith { estado ->
+        porEstado[estado].orEmpty().map { PiezaResumen(it.tipo.nombre, it.detalle, it.tipo.name) }
     }
 }
