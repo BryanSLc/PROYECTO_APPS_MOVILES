@@ -8,12 +8,14 @@ data class MantenimientoUi(
 )
 
 data class VehiculoUi(
-    val id: Int,
+    val id: Long,
     val nombre: String,
     val placa: String,
     val tipo: String,
     val kilometraje: String,
-    val mantenimientos: List<MantenimientoUi> = emptyList()
+    val mantenimientos: List<MantenimientoUi> = emptyList(),
+    /** true si es el vehículo que se muestra en Inicio. */
+    val activo: Boolean = false
 ) {
     val vencidos: Int
         get() = mantenimientos.count { it.estado == EstadoMantenimiento.VENCIDO }

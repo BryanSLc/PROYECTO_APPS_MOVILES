@@ -23,7 +23,6 @@ class InicioViewModel @Inject constructor(
 
     private val mostrarActualizarKm = MutableStateFlow(false)
 
-    /** Se recalcula solo cada vez que cambia el kilometraje o se registra un mantenimiento. */
     val state: StateFlow<InicioState> = combine(
         repositorio.datos,
         mostrarActualizarKm
@@ -43,18 +42,16 @@ class InicioViewModel @Inject constructor(
     }
 }
 
-private fun construirEstado(datos: DatosKilo, mostrarActualizarKm: Boolean): InicioState {
-    val estados = CalculoMantenimiento.estadosDe(datos)
+private fun construirEstado(datos: DatosKilo, mostrar: Boolean): InicioState {
+    val porEstado = CalculoMantenimiento.estadosDe(datos).groupBy { it.situacion.aEstadoPieza() }
     return InicioState(
         vehiculo = VehiculoResumen(
             nombre = datos.vehiculo.nombre,
             placa = datos.vehiculo.placa,
             carroceria = datos.vehiculo.carroceria,
-            kilometraje = "${datos.vehiculo.km.conComas()} km"
+            kilometraje = datos.vehiculo.km.conComas() + " km"
         ),
-        resumenes = EstadoPieza.values().map { estado ->
-            ResumenEstado(estado, estados.count { it.situacion.aEstadoPieza() == estado })
-        },
-        mostrarActualizarKm = mostrarActualizarKm
+        resumenes = EstadoPieza.values().map { ResumenEstado(it, porEstado[it].orEmpty().size) },
+        mostrarActualizarKm = mostrar
     )
 }

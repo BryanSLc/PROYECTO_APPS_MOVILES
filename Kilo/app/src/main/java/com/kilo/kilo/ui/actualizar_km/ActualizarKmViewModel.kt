@@ -44,6 +44,7 @@ class ActualizarKmViewModel @Inject constructor(
         error.value = null
     }
 
+    /** true si se guardó (la hoja se cierra); false si el km no es válido. */
     fun onConfirmar(): Boolean {
         val nuevo = kmNuevo.value.toIntOrNull() ?: return false
         val mensaje = repositorio.actualizarKm(nuevo)

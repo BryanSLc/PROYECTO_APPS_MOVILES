@@ -39,10 +39,9 @@ class PiezasPorCategoriasViewModel @Inject constructor(
     }
 }
 
-/** Reparte las 5 piezas en las 4 categorías según el cálculo. */
 private fun agrupar(datos: DatosKilo): Map<EstadoPieza, List<PiezaResumen>> {
     val porEstado = CalculoMantenimiento.estadosDe(datos).groupBy { it.situacion.aEstadoPieza() }
     return EstadoPieza.values().associateWith { estado ->
-        porEstado[estado].orEmpty().map { PiezaResumen(it.tipo.nombre, it.detalle, it.tipo.name) }
+        porEstado[estado].orEmpty().map { PiezaResumen(it.pieza.nombre, it.detalle, it.pieza.id.toString()) }
     }
 }

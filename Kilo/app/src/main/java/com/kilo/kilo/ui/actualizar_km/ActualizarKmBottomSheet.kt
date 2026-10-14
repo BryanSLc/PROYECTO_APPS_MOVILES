@@ -52,6 +52,7 @@ fun ActualizarKmBottomSheet(
                 onDismiss()
             },
             onConfirmar = {
+                // Solo se cierra si el kilometraje se guardó bien
                 if (viewModel.onConfirmar()) onDismiss()
             }
         )

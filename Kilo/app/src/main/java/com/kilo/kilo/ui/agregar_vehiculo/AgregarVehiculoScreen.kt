@@ -1,11 +1,14 @@
 package com.kilo.kilo.ui.agregar_vehiculo
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -15,8 +18,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,8 +55,14 @@ fun AgregarVehiculoScreen(
         onPlacaChange = viewModel::onPlacaChange,
         onKilometrajeChange = viewModel::onKilometrajeChange,
         onTipoChange = viewModel::onTipoChange,
-        onMantenimientoKmChange = viewModel::onMantenimientoKmChange,
-        onGuardar = viewModel::onGuardar
+        onPiezaNombreChange = viewModel::onPiezaNombreChange,
+        onPiezaLimiteChange = viewModel::onPiezaLimiteChange,
+        onPiezaMesesChange = viewModel::onPiezaMesesChange,
+        onPiezaUltimoKmChange = viewModel::onPiezaUltimoKmChange,
+        onAgregarPieza = viewModel::onAgregarPieza,
+        onQuitarPieza = viewModel::onQuitarPieza,
+        // Solo vuelve a "Mis vehículos" si se guardó bien; si no, se muestra el error
+        onGuardar = { if (viewModel.onGuardar()) onVolver() }
     )
 }
 
@@ -62,7 +76,12 @@ fun AgregarVehiculoContent(
     onPlacaChange: (String) -> Unit,
     onKilometrajeChange: (String) -> Unit,
     onTipoChange: (String) -> Unit,
-    onMantenimientoKmChange: (String, String) -> Unit,
+    onPiezaNombreChange: (Long, String) -> Unit,
+    onPiezaLimiteChange: (Long, String) -> Unit,
+    onPiezaMesesChange: (Long, String) -> Unit,
+    onPiezaUltimoKmChange: (Long, String) -> Unit,
+    onAgregarPieza: () -> Unit,
+    onQuitarPieza: (Long) -> Unit,
     onGuardar: () -> Unit
 ) {
     Column(
@@ -132,38 +151,37 @@ fun AgregarVehiculoContent(
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Últimos mantenimientos (opcional)",
+                    text = "Piezas y límites de cambio",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Si lo dejas vacío, ese mantenimiento aparecerá como \"sin datos\", nunca como vencido.",
+                    text = "Define cada cuántos km (y, si quieres, cada cuántos meses) se cambia cada pieza. " +
+                        "El estado se calcula con el kilometraje recorrido. Si dejas vacío el último " +
+                        "cambio, la pieza aparecerá como \"sin datos\".",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                state.mantenimientos.forEach { mantenimiento ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = mantenimiento.nombre,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = mantenimiento.km,
-                            onValueChange = { onMantenimientoKmChange(mantenimiento.nombre, it) },
-                            singleLine = true,
-                            suffix = { Text("km") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.width(140.dp)
-                        )
-                    }
+                state.piezas.forEach { pieza ->
+                    PiezaEditor(
+                        pieza = pieza,
+                        onNombreChange = { onPiezaNombreChange(pieza.id, it) },
+                        onLimiteChange = { onPiezaLimiteChange(pieza.id, it) },
+                        onMesesChange = { onPiezaMesesChange(pieza.id, it) },
+                        onUltimoKmChange = { onPiezaUltimoKmChange(pieza.id, it) },
+                        onQuitar = { onQuitarPieza(pieza.id) }
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = onAgregarPieza,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("+ Agregar pieza")
                 }
             }
         }
@@ -185,6 +203,69 @@ fun AgregarVehiculoContent(
         ) {
             Text("Guardar vehículo")
         }
+    }
+}
+
+@Composable
+private fun PiezaEditor(
+    pieza: PiezaForm,
+    onNombreChange: (String) -> Unit,
+    onLimiteChange: (String) -> Unit,
+    onMesesChange: (String) -> Unit,
+    onUltimoKmChange: (String) -> Unit,
+    onQuitar: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant)
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                value = pieza.nombre,
+                onValueChange = onNombreChange,
+                label = { Text("Pieza") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onQuitar) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Quitar pieza",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = pieza.limiteKm,
+                onValueChange = onLimiteChange,
+                label = { Text("Cambio cada") },
+                singleLine = true,
+                suffix = { Text("km") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = pieza.meses,
+                onValueChange = onMesesChange,
+                label = { Text("Meses (opc.)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.weight(1f)
+            )
+        }
+        OutlinedTextField(
+            value = pieza.ultimoKm,
+            onValueChange = onUltimoKmChange,
+            label = { Text("Último cambio (opcional)") },
+            singleLine = true,
+            suffix = { Text("km") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -227,7 +308,12 @@ private fun AgregarVehiculoPreview() {
             onPlacaChange = {},
             onKilometrajeChange = {},
             onTipoChange = {},
-            onMantenimientoKmChange = { _, _ -> },
+            onPiezaNombreChange = { _, _ -> },
+            onPiezaLimiteChange = { _, _ -> },
+            onPiezaMesesChange = { _, _ -> },
+            onPiezaUltimoKmChange = { _, _ -> },
+            onAgregarPieza = {},
+            onQuitarPieza = {},
             onGuardar = {}
         )
     }

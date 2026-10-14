@@ -1,6 +1,7 @@
 package com.kilo.kilo.ui.mis_vehiculos
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +60,7 @@ fun MisVehiculosScreen(
     MisVehiculosContent(
         state = state,
         onAgregar = onAgregar,
+        onSeleccionar = viewModel::onSeleccionar,
         onEliminar = viewModel::onEliminar
     )
 }
@@ -67,7 +69,8 @@ fun MisVehiculosScreen(
 fun MisVehiculosContent(
     state: MisVehiculosState,
     onAgregar: () -> Unit,
-    onEliminar: (Int) -> Unit
+    onSeleccionar: (Long) -> Unit,
+    onEliminar: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -95,10 +98,20 @@ fun MisVehiculosContent(
             }
         }
 
+        if (state.error != null) {
+            Text(
+                text = state.error,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
+
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(state.vehiculos, key = { it.id }) { vehiculo ->
                 VehiculoItem(
                     vehiculo = vehiculo,
+                    onSeleccionar = { onSeleccionar(vehiculo.id) },
                     onEliminar = { onEliminar(vehiculo.id) }
                 )
             }
@@ -110,9 +123,10 @@ fun MisVehiculosContent(
 @Composable
 private fun VehiculoItem(
     vehiculo: VehiculoUi,
+    onSeleccionar: () -> Unit,
     onEliminar: () -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onSeleccionar)) {
         Column(modifier = Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
@@ -145,11 +159,19 @@ private fun VehiculoItem(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    if (vehiculo.activo) {
+                        Text(
+                            text = "Vehículo activo",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 if (vehiculo.vencidos > 0) {
                     Text(
-                        text = "${vehiculo.vencidos} vencido",
+                        text = "${vehiculo.vencidos} vencido(s)",
                         style = MaterialTheme.typography.labelSmall,
                         color = ColorVencido,
                         fontWeight = FontWeight.Bold
@@ -231,6 +253,7 @@ private fun MisVehiculosPreview() {
                 )
             ),
             onAgregar = {},
+            onSeleccionar = {},
             onEliminar = {}
         )
     }

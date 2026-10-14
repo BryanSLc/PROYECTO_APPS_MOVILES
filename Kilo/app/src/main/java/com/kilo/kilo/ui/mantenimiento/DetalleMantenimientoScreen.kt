@@ -65,6 +65,7 @@ fun DetalleMantenimientoScreen(
 
     if (state.mostrarRegistro) {
         RegistrarMantenimiento(
+            tipoInicial = state.tipoClave,
             onCancelar = viewModel::onCerrarRegistro,
             onGuardar = viewModel::onCerrarRegistro
         )

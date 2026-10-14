@@ -31,6 +31,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,9 +49,13 @@ import com.kilo.kilo.ui.theme.*
 fun RegistrarMantenimiento(
     onCancelar: () -> Unit,
     onGuardar: () -> Unit,
+    tipoInicial: String? = null,
     viewModel: RegistrarMantenimientoViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Al abrirse, deja elegida la pieza, la fecha de hoy y el km actual
+    LaunchedEffect(Unit) { viewModel.preparar(tipoInicial) }
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -72,8 +77,8 @@ fun RegistrarMantenimiento(
                 onCancelar()
             },
             onGuardar = {
-                viewModel.onGuardar()
-                onGuardar()
+                // Solo se cierra si se guardó bien; si no, se muestra el error
+                if (viewModel.onGuardar()) onGuardar()
             }
         )
     }
@@ -144,6 +149,11 @@ fun RegistrarMantenimientoContent(
             alto = 80.dp,
             unaLinea = false
         )
+
+        state.error?.let { mensaje ->
+            Spacer(Modifier.height(10.dp))
+            Text(mensaje, fontSize = 12.sp, color = RojoVencido)
+        }
 
         Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
