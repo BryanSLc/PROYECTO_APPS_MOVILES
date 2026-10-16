@@ -54,7 +54,7 @@ fun HistorialContent(
     state: HistorialState,
     onVolver: () -> Unit,
     onFiltroChange: (String) -> Unit,
-    onEliminar: (Int) -> Unit
+    onEliminar: (Long) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -172,10 +172,11 @@ private fun HistorialPreview() {
         HistorialContent(
             state = HistorialState(
                 vehiculo = "Mazda 3 2019",
+                filtros = listOf("Todos", "Aceite del motor", "Frenos", "Filtro de aceite"),
                 registros = listOf(
-                    RegistroHistorial(1, "Aceite", "ACE", "Aceite del motor", "20 may 2026", "60,000 km", "Sintético 5W-30"),
+                    RegistroHistorial(1, "Aceite del motor", "ACE", "Aceite del motor", "20 may 2026", "60,000 km", "Sintético 5W-30"),
                     RegistroHistorial(2, "Frenos", "FRE", "Frenos", "20 ene 2026", "55,000 km", "Balatas delanteras"),
-                    RegistroHistorial(3, "Filtro", "FIL", "Filtro de aceite", "10 oct 2025", "56,000 km", "Original")
+                    RegistroHistorial(3, "Filtro de aceite", "FIL", "Filtro de aceite", "10 oct 2025", "56,000 km", "Original")
                 )
             ),
             onVolver = {},
