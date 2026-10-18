@@ -195,4 +195,4 @@ private fun BarraTabs(rutaActual: String?, onTabClick: (String) -> Unit) {
             )
         }
     }
-}
+}

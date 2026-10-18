@@ -38,6 +38,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
 import com.kilo.kilo.ui.theme.KiloTheme
 
 @Composable
@@ -46,6 +48,13 @@ fun AgregarVehiculoScreen(
     viewModel: AgregarVehiculoViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Evento de una sola vez: cuando se guardó bien, vuelve a "Mis vehículos"
+    val alVolver by rememberUpdatedState(onVolver)
+    LaunchedEffect(Unit) {
+        viewModel.eventos.collect { alVolver() }
+    }
+
     AgregarVehiculoContent(
         state = state,
         onVolver = onVolver,
@@ -61,8 +70,7 @@ fun AgregarVehiculoScreen(
         onPiezaUltimoKmChange = viewModel::onPiezaUltimoKmChange,
         onAgregarPieza = viewModel::onAgregarPieza,
         onQuitarPieza = viewModel::onQuitarPieza,
-        // Solo vuelve a "Mis vehículos" si se guardó bien; si no, se muestra el error
-        onGuardar = { if (viewModel.onGuardar()) onVolver() }
+        onGuardar = viewModel::onGuardar
     )
 }
 
@@ -317,4 +325,4 @@ private fun AgregarVehiculoPreview() {
             onGuardar = {}
         )
     }
-}
+}

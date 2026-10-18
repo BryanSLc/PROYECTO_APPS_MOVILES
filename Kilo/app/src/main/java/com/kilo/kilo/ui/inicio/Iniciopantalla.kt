@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.UiStateContent
+import com.kilo.kilo.ui.common.datosOrNull
 import com.kilo.kilo.ui.theme.*
 
 /** Pestañas de la barra inferior. */
@@ -78,21 +80,23 @@ fun InicioPantalla(
     viewModel: InicioViewModel = hiltViewModel(),
     piezasViewModel: PiezasPorCategoriasViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    InicioContent(
-        state = state,
-        onCambiarVehiculo = onCambiarVehiculo,
-        onActualizarKm = viewModel::onActualizarKmClick,
-        onVerHistorial = onVerHistorial,
-        onTarjetaClick = piezasViewModel::onTarjetaClick,
-        onPestanaClick = { indice ->
-            when (indice) {
-                1 -> onIrAVehiculos()
-                2 -> onIrAAjustes()
+    UiStateContent(uiState) { state ->
+        InicioContent(
+            state = state,
+            onCambiarVehiculo = onCambiarVehiculo,
+            onActualizarKm = viewModel::onActualizarKmClick,
+            onVerHistorial = onVerHistorial,
+            onTarjetaClick = piezasViewModel::onTarjetaClick,
+            onPestanaClick = { indice ->
+                when (indice) {
+                    1 -> onIrAVehiculos()
+                    2 -> onIrAAjustes()
+                }
             }
-        }
-    )
+        )
+    }
 
     // Hoja flotante: se muestra sola cuando el ViewModel tiene un estado abierto
     PiezasPorCategorias(
@@ -103,7 +107,7 @@ fun InicioPantalla(
     )
 
     // Hoja "Actualizar kilometraje": se abre con el botón "Actualizar km"
-    if (state.mostrarActualizarKm) {
+    if (uiState.datosOrNull()?.mostrarActualizarKm == true) {
         ActualizarKmBottomSheet(onDismiss = viewModel::onActualizarKmCerrar)
     }
 }
@@ -383,4 +387,4 @@ private fun InicioPantallaPreview() {
             onPestanaClick = {}
         )
     }
-}
+}

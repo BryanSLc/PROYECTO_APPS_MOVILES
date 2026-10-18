@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.datosOrNull
 import com.kilo.kilo.ui.theme.*
 
 /**
@@ -48,7 +49,9 @@ fun PiezasPorCategorias(
     onPiezaClick: (PiezaResumen) -> Unit = {},
     viewModel: PiezasPorCategoriasViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // La hoja solo se dibuja cuando hay datos y una categoría abierta
+    val state = uiState.datosOrNull() ?: return
     val estado = state.estadoAbierto ?: return
 
     ModalBottomSheet(
@@ -152,4 +155,4 @@ private fun PiezasVencidosPreview() {
             )
         }
     }
-}
+}

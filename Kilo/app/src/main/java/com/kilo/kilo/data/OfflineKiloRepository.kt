@@ -1,61 +1,65 @@
 package com.kilo.kilo.data
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.kilo.kilo.data.local.KiloDao
+import com.kilo.kilo.data.local.PiezaEntity
+import com.kilo.kilo.data.local.RegistroEntity
+import com.kilo.kilo.data.local.VehiculoEntity
 import java.time.LocalDate
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 // ===================================================================
-//  REPOSITORIO (implementación): guarda los datos en el teléfono
+//  REPOSITORIO (implementación): Room es la ÚNICA fuente de verdad.
+//  Todo cambio se escribe en Room y la UI lo recibe por el Flow del DAO.
 // ===================================================================
-
 
 @Singleton
 class OfflineKiloRepository @Inject constructor(
-    @ApplicationContext context: Context
+    private val dao: KiloDao
 ) : KiloRepository {
-    private val prefs = context.getSharedPreferences("kilo_datos", Context.MODE_PRIVATE)
 
-    // Debe declararse antes de _datos: cargar() puede usarlo
-    private var ultimoId = 0L
+    private val ultimoId = AtomicLong(0L)
 
-    private val _datos = MutableStateFlow(cargar())
-    override val datos: StateFlow<DatosKilo> = _datos.asStateFlow()
+    private fun nuevoId(): Long = ultimoId.updateAndGet { max(System.currentTimeMillis(), it + 1) }
 
-    private fun nuevoId(): Long {
-        ultimoId = max(System.currentTimeMillis(), ultimoId + 1)
-        return ultimoId
+    override val datos: Flow<DatosKilo> = dao.observarVehiculos()
+        .onStart { sembrarSiVacio() }
+        .filter { it.isNotEmpty() }
+        .map { it.aDatosKilo() }
+
+    /** Foto actual de la base de datos (para validar antes de escribir). */
+    private suspend fun actual(): DatosKilo {
+        sembrarSiVacio()
+        return dao.obtenerVehiculos().aDatosKilo()
     }
 
     // ------------------------------------------------------------ vehículos
 
     /** Cambia el kilometraje del vehículo activo. Devuelve un mensaje de error o null si salió bien. */
-    override fun actualizarKm(nuevoKm: Int): String? {
-        val actual = _datos.value
-        val v = actual.vehiculo
+    override suspend fun actualizarKm(nuevoKm: Int): String? {
+        val v = actual().vehiculo
         if (nuevoKm < v.km) {
             return "No puede ser menor al actual (${v.km.conComas()} km)"
         }
-        guardar(actual.conVehiculo(v.copy(km = nuevoKm)))
+        dao.actualizarKm(v.id, nuevoKm)
         return null
     }
 
     /** Agrega un vehículo con sus piezas y lo deja como vehículo activo. */
-    override fun agregarVehiculo(
+    override suspend fun agregarVehiculo(
         nombre: String,
         placa: String,
         carroceria: String,
         km: Int,
         piezas: List<NuevaPieza>
     ): String? {
-        val actual = _datos.value
+        val actual = actual()
         if (nombre.isBlank()) return "Escribe la marca y el modelo"
         if (placa.isBlank()) return "Escribe la placa"
         if (km < 0) return "El kilometraje no es válido"
@@ -79,43 +83,48 @@ class OfflineKiloRepository @Inject constructor(
         }
 
         val hoy = LocalDate.now()
-        val listaPiezas = mutableListOf<Pieza>()
-        val registros = mutableListOf<RegistroMantenimiento>()
+        val vehiculoId = nuevoId()
+        val piezasEntidad = mutableListOf<PiezaEntity>()
+        val registrosEntidad = mutableListOf<RegistroEntity>()
         piezas.forEach { p ->
-            val pieza = Pieza(nuevoId(), p.nombre.trim(), p.intervaloKm, p.intervaloMeses)
-            listaPiezas += pieza
+            val piezaId = nuevoId()
+            piezasEntidad += PiezaEntity(piezaId, vehiculoId, p.nombre.trim(), p.intervaloKm, p.intervaloMeses)
             if (p.ultimoKm != null) {
-                registros += RegistroMantenimiento(nuevoId(), pieza.id, hoy, p.ultimoKm, "Registro inicial")
+                registrosEntidad += RegistroEntity(
+                    id = nuevoId(),
+                    vehiculoId = vehiculoId,
+                    piezaId = piezaId,
+                    fecha = hoy,
+                    km = p.ultimoKm,
+                    nota = "Registro inicial"
+                )
             }
         }
 
-        val vehiculo = Vehiculo(
-            id = nuevoId(),
+        val vehiculo = VehiculoEntity(
+            id = vehiculoId,
             nombre = nombre.trim(),
             placa = placa.trim().uppercase(),
             carroceria = carroceria,
             km = km,
-            piezas = listaPiezas,
-            registros = registros
+            activo = true
         )
-        guardar(DatosKilo(actual.vehiculos + vehiculo, vehiculo.id))
+        dao.agregarVehiculoActivo(vehiculo, piezasEntidad, registrosEntidad)
         return null
     }
 
-    override fun seleccionarVehiculo(id: Long) {
-        val actual = _datos.value
+    override suspend fun seleccionarVehiculo(id: Long) {
+        val actual = actual()
         if (actual.vehiculos.none { it.id == id } || actual.vehiculoActivoId == id) return
-        guardar(actual.copy(vehiculoActivoId = id))
+        dao.marcarActivo(id)
     }
 
     /** No permite borrar el último vehículo. */
-    override fun eliminarVehiculo(id: Long): String? {
-        val actual = _datos.value
+    override suspend fun eliminarVehiculo(id: Long): String? {
+        val actual = actual()
         if (actual.vehiculos.none { it.id == id }) return null
         if (actual.vehiculos.size <= 1) return "Debe quedar al menos un vehículo"
-        val restantes = actual.vehiculos.filterNot { it.id == id }
-        val activo = if (actual.vehiculoActivoId == id) restantes.first().id else actual.vehiculoActivoId
-        guardar(DatosKilo(restantes, activo))
+        dao.eliminarVehiculoYReasignarActivo(id)
         return null
     }
 
@@ -125,9 +134,13 @@ class OfflineKiloRepository @Inject constructor(
      * Registra que una pieza del vehículo activo se cambió en [km].
      * NO modifica el kilometraje del vehículo: eso solo se hace con [actualizarKm].
      */
-    override fun registrarMantenimiento(piezaId: Long, fecha: LocalDate, km: Int, nota: String): String? {
-        val actual = _datos.value
-        val v = actual.vehiculo
+    override suspend fun registrarMantenimiento(
+        piezaId: Long,
+        fecha: LocalDate,
+        km: Int,
+        nota: String
+    ): String? {
+        val v = actual().vehiculo
         if (v.piezas.none { it.id == piezaId }) return "No se encontró la pieza"
         if (fecha.isAfter(LocalDate.now())) return "La fecha no puede ser futura"
         if (km < 0) return "El kilometraje no es válido"
@@ -135,143 +148,49 @@ class OfflineKiloRepository @Inject constructor(
             return "No puede ser mayor al kilometraje actual (${v.km.conComas()} km). " +
                     "Primero actualiza el kilometraje."
         }
-
-        val nuevo = RegistroMantenimiento(
-            id = nuevoId(),
-            piezaId = piezaId,
-            fecha = fecha,
-            km = km,
-            nota = nota.trim()
+        dao.insertarRegistro(
+            RegistroEntity(
+                id = nuevoId(),
+                vehiculoId = v.id,
+                piezaId = piezaId,
+                fecha = fecha,
+                km = km,
+                nota = nota.trim()
+            )
         )
-        guardar(actual.conVehiculo(v.copy(registros = v.registros + nuevo)))
         return null
     }
 
     /** Borra un registro del historial del vehículo activo. */
-    override fun eliminarRegistro(registroId: Long): String? {
-        val actual = _datos.value
-        val v = actual.vehiculo
+    override suspend fun eliminarRegistro(registroId: Long): String? {
+        val v = actual().vehiculo
         if (v.registros.none { it.id == registroId }) return "No se encontró el registro"
-        guardar(actual.conVehiculo(v.copy(registros = v.registros.filterNot { it.id == registroId })))
+        dao.eliminarRegistro(registroId)
         return null
     }
 
-    private fun DatosKilo.conVehiculo(nuevo: Vehiculo): DatosKilo =
-        copy(vehiculos = vehiculos.map { if (it.id == nuevo.id) nuevo else it })
+    // ------------------------------------------------------------ datos iniciales
 
-    // ------------------------------------------------------------ guardar / cargar
+    private suspend fun sembrarSiVacio() {
+        if (dao.contarVehiculos() > 0) return
 
-    private fun guardar(datos: DatosKilo) {
-        _datos.value = datos
-        persistir(datos)
-    }
-
-    private fun persistir(datos: DatosKilo) {
-        val json = JSONObject().apply {
-            put("activo", datos.vehiculoActivoId)
-            put("vehiculos", JSONArray().apply {
-                datos.vehiculos.forEach { v ->
-                    put(JSONObject().apply {
-                        put("id", v.id)
-                        put("nombre", v.nombre)
-                        put("placa", v.placa)
-                        put("carroceria", v.carroceria)
-                        put("km", v.km)
-                        put("piezas", JSONArray().apply {
-                            v.piezas.forEach { p ->
-                                put(JSONObject().apply {
-                                    put("id", p.id)
-                                    put("nombre", p.nombre)
-                                    put("intervaloKm", p.intervaloKm)
-                                    if (p.intervaloMeses != null) put("intervaloMeses", p.intervaloMeses)
-                                })
-                            }
-                        })
-                        put("registros", JSONArray().apply {
-                            v.registros.forEach { r ->
-                                put(JSONObject().apply {
-                                    put("id", r.id)
-                                    put("piezaId", r.piezaId)
-                                    put("fecha", r.fecha.toString())
-                                    put("km", r.km)
-                                    put("nota", r.nota)
-                                })
-                            }
-                        })
-                    })
-                }
-            })
-        }
-        prefs.edit().putString(CLAVE, json.toString()).apply()
-    }
-
-    private fun cargar(): DatosKilo {
-        val texto = prefs.getString(CLAVE, null)
-        if (texto == null) {
-            return datosIniciales().also { persistir(it) }
-        }
-        return try {
-            val raiz = JSONObject(texto)
-            val arregloV = raiz.getJSONArray("vehiculos")
-            val vehiculos = (0 until arregloV.length()).map { i ->
-                val v = arregloV.getJSONObject(i)
-                val arregloP = v.getJSONArray("piezas")
-                val arregloR = v.getJSONArray("registros")
-                Vehiculo(
-                    id = v.getLong("id"),
-                    nombre = v.getString("nombre"),
-                    placa = v.getString("placa"),
-                    carroceria = v.getString("carroceria"),
-                    km = v.getInt("km"),
-                    piezas = (0 until arregloP.length()).map { j ->
-                        val p = arregloP.getJSONObject(j)
-                        Pieza(
-                            id = p.getLong("id"),
-                            nombre = p.getString("nombre"),
-                            intervaloKm = p.getInt("intervaloKm"),
-                            intervaloMeses = if (p.has("intervaloMeses")) p.getInt("intervaloMeses") else null
-                        )
-                    },
-                    registros = (0 until arregloR.length()).map { j ->
-                        val r = arregloR.getJSONObject(j)
-                        RegistroMantenimiento(
-                            id = r.getLong("id"),
-                            piezaId = r.getLong("piezaId"),
-                            fecha = LocalDate.parse(r.getString("fecha")),
-                            km = r.getInt("km"),
-                            nota = r.optString("nota", "")
-                        )
-                    }
-                )
-            }
-            if (vehiculos.isEmpty() || vehiculos.any { it.piezas.isEmpty() }) {
-                datosIniciales()
-            } else {
-                DatosKilo(vehiculos, raiz.getLong("activo"))
-            }
-        } catch (e: Exception) {
-            datosIniciales()
-        }
-    }
-
-    private fun datosIniciales(): DatosKilo {
+        val vehiculoId = 1L
         val piezas = PIEZAS_BASE.mapIndexed { i, p ->
-            Pieza((i + 1).toLong(), p.nombre, p.intervaloKm, p.intervaloMeses)
+            PiezaEntity((i + 1).toLong(), vehiculoId, p.nombre, p.intervaloKm, p.intervaloMeses)
         }
         // ids de piezas: 1 aceite, 2 filtro, 3 llantas, 4 frenos, 5 batería
-        val registros = listOf(
-            RegistroMantenimiento(1, 1, LocalDate.of(2026, 5, 20), 60_000, "Sintético 5W-30"),
-            RegistroMantenimiento(2, 1, LocalDate.of(2025, 9, 22), 50_100, "Taller Central"),
-            RegistroMantenimiento(3, 1, LocalDate.of(2025, 2, 14), 40_400, "Semisintético"),
-            RegistroMantenimiento(4, 2, LocalDate.of(2025, 10, 10), 56_000, "Original"),
-            RegistroMantenimiento(5, 4, LocalDate.of(2026, 1, 20), 55_000, "Balatas delanteras"),
-            RegistroMantenimiento(6, 3, LocalDate.of(2025, 6, 15), 48_000, "Juego nuevo")
-        )
-        val mazda = Vehiculo(1, "Mazda 3 2019", "PBX-482", "Sedán", 68_450, piezas, registros)
-        return DatosKilo(listOf(mazda), mazda.id)
-    }
+        fun registro(id: Long, piezaId: Long, fecha: LocalDate, km: Int, nota: String) =
+            RegistroEntity(id, vehiculoId, piezaId, fecha, km, nota)
 
-    private companion object {
-        const val CLAVE = "datos_v2"
+        val registros = listOf(
+            registro(1, 1, LocalDate.of(2026, 5, 20), 60_000, "Sintético 5W-30"),
+            registro(2, 1, LocalDate.of(2025, 9, 22), 50_100, "Taller Central"),
+            registro(3, 1, LocalDate.of(2025, 2, 14), 40_400, "Semisintético"),
+            registro(4, 2, LocalDate.of(2025, 10, 10), 56_000, "Original"),
+            registro(5, 4, LocalDate.of(2026, 1, 20), 55_000, "Balatas delanteras"),
+            registro(6, 3, LocalDate.of(2025, 6, 15), 48_000, "Juego nuevo")
+        )
+        val mazda = VehiculoEntity(vehiculoId, "Mazda 3 2019", "PBX-482", "Sedán", 68_450, activo = true)
+        dao.sembrarSiVacio(mazda, piezas, registros)
     }
 }

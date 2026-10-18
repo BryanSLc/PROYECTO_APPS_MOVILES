@@ -8,4 +8,4 @@ data class ActualizarKmState(
 ) {
     val puedeConfirmar: Boolean
         get() = kmNuevo.isNotBlank()
-}
+}

@@ -93,4 +93,4 @@ fun SplashContent(state: SplashState) {
 @Composable
 private fun SplashPreview() {
     KiloTheme { SplashContent(SplashState(progreso = 0.35f)) }
-}
+}

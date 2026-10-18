@@ -26,4 +26,4 @@ data class HistorialState(
         } else {
             registros.filter { it.tipo == filtroSeleccionado }
         }
-}
+}

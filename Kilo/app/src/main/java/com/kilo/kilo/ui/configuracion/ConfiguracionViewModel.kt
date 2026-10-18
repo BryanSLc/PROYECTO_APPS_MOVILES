@@ -3,6 +3,8 @@ package com.kilo.kilo.ui.configuracion
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kilo.kilo.data.PreferenciasRepository
+import com.kilo.kilo.ui.common.UiState
+import com.kilo.kilo.ui.common.comoUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,14 +17,13 @@ class ConfiguracionViewModel @Inject constructor(
     private val preferencias: PreferenciasRepository
 ) : ViewModel() {
 
-    val state: StateFlow<ConfiguracionState> = preferencias.preferencias
+    val uiState: StateFlow<UiState<ConfiguracionState>> = preferencias.preferencias
         .map { ConfiguracionState(it.notificacionesActivas, it.unidadDistancia) }
+        .comoUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = preferencias.preferencias.value.let {
-                ConfiguracionState(it.notificacionesActivas, it.unidadDistancia)
-            }
+            initialValue = UiState.Loading
         )
 
     fun onNotificacionesChange(activas: Boolean) {
@@ -32,4 +33,4 @@ class ConfiguracionViewModel @Inject constructor(
     fun onUnidadChange(unidad: String) {
         preferencias.setUnidadDistancia(unidad)
     }
-}
+}

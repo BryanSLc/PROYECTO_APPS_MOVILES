@@ -9,6 +9,8 @@ import com.kilo.kilo.data.conComas
 import com.kilo.kilo.ui.piezasporcategorias.EstadoPieza
 import com.kilo.kilo.ui.piezasporcategorias.aEstadoPieza
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kilo.kilo.ui.common.UiState
+import com.kilo.kilo.ui.common.comoUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -23,14 +25,15 @@ class InicioViewModel @Inject constructor(
 
     private val mostrarActualizarKm = MutableStateFlow(false)
 
-    val state: StateFlow<InicioState> = combine(
+    val uiState: StateFlow<UiState<InicioState>> = combine(
         repositorio.datos,
         mostrarActualizarKm
     ) { datos, mostrar -> construirEstado(datos, mostrar) }
+        .comoUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = construirEstado(repositorio.datos.value, false)
+            initialValue = UiState.Loading
         )
 
     fun onActualizarKmClick() {
@@ -54,4 +57,4 @@ private fun construirEstado(datos: DatosKilo, mostrar: Boolean): InicioState {
         resumenes = EstadoPieza.values().map { ResumenEstado(it, porEstado[it].orEmpty().size) },
         mostrarActualizarKm = mostrar
     )
-}
+}

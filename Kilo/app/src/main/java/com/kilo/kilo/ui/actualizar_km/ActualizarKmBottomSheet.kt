@@ -27,6 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.UiStateContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.foundation.layout.height
 import com.kilo.kilo.ui.theme.KiloTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -35,7 +39,13 @@ fun ActualizarKmBottomSheet(
     onDismiss: () -> Unit,
     viewModel: ActualizarKmViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Evento de una sola vez: cuando se guardó bien, se cierra la hoja
+    val alCerrar by rememberUpdatedState(onDismiss)
+    LaunchedEffect(Unit) {
+        viewModel.eventos.collect { alCerrar() }
+    }
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -44,18 +54,20 @@ fun ActualizarKmBottomSheet(
         },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
-        ActualizarKmContent(
-            state = state,
-            onKmChange = viewModel::onKmChange,
-            onCancelar = {
-                viewModel.onCancelar()
-                onDismiss()
-            },
-            onConfirmar = {
-                // Solo se cierra si el kilometraje se guardó bien
-                if (viewModel.onConfirmar()) onDismiss()
-            }
-        )
+        UiStateContent(
+            uiState = uiState,
+            modifier = Modifier.fillMaxWidth().height(160.dp)
+        ) { state ->
+            ActualizarKmContent(
+                state = state,
+                onKmChange = viewModel::onKmChange,
+                onCancelar = {
+                    viewModel.onCancelar()
+                    onDismiss()
+                },
+                onConfirmar = viewModel::onConfirmar
+            )
+        }
     }
 }
 
@@ -151,4 +163,4 @@ private fun ActualizarKmPreview() {
             onConfirmar = {}
         )
     }
-}
+}

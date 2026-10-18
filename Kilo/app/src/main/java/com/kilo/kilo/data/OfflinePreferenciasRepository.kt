@@ -45,4 +45,4 @@ class OfflinePreferenciasRepository @Inject constructor(
         const val CLAVE_NOTIFICACIONES = "notificaciones"
         const val CLAVE_UNIDAD = "unidad"
     }
-}
+}

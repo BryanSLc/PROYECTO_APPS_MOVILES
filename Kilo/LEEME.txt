@@ -34,8 +34,8 @@ MANTENIMIENTOS INCLUIDOS
 Pieza               Intervalo km    Intervalo tiempo
 Aceite del motor    10 000 km       6 meses
 Filtro de aceite    10 000 km       6 meses
-Llantas             40 000 km       24 meses
-Frenos              20 000 km       12 meses
+Llantas             40 000 km       36 meses
+Frenos              30 000 km       24 meses
 Batería             60 000 km       36 meses
 
 
@@ -55,16 +55,19 @@ TECNOLOGÍAS
 - Lenguaje: Kotlin
 - Interfaz: Jetpack Compose + Material 3
 - Arquitectura: MVVM (Vista - ViewModel - Repositorio - Datos)
-- Base de datos local: Room (SQLite)
-- Preferencias: DataStore
-- Navegación: Navigation Compose
+- Base de datos local: Room (SQLite), única fuente de verdad (Flow + suspend)
+- Preferencias: SharedPreferences (ajustes simples)
+- Inyección de dependencias: Hilt
+- Estado de UI: StateFlow con UiState (Loading / Success / Error)
+- Navegación: Navigation Compose (NavHost + NavController)
 
 
 BASE DE DATOS
 -------------
-- vehiculos                 (tabla maestra)
-- tipos_mantenimiento       (tabla maestra, precargada)
-- registros_mantenimiento   (tabla transaccional / historial)
+- vehiculos   (tabla maestra: vehículo, km y cuál es el activo)
+- piezas      (piezas de cada vehículo con su intervalo en km y meses)
+- registros   (historial de mantenimientos realizados)
+En la primera ejecución se precarga un vehículo de ejemplo.
 
 CRUD completo: crear, consultar, actualizar y eliminar.
 Todos los datos se guardan en el teléfono; no requiere internet.
@@ -72,7 +75,7 @@ Todos los datos se guardan en el teléfono; no requiere internet.
 
 REQUISITOS
 ----------
-- Android 8.0 (API 26) o superior
+- Android 14 (API 34) o superior
 - Android Studio Koala o superior
 - JDK 17 o 21
 
@@ -84,7 +87,7 @@ CÓMO EJECUTAR
 2. Abrir la carpeta en Android Studio (File > Open).
 3. En Settings > Build Tools > Gradle, elegir JDK 17 o 21.
 4. Esperar la sincronización de Gradle.
-5. Ejecutar en un emulador o dispositivo con Android 8.0 o superior.
+5. Ejecutar en un emulador o dispositivo con Android 14 o superior.
 
 
 PENDIENTES

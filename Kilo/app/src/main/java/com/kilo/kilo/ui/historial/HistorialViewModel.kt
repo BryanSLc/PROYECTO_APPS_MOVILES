@@ -9,11 +9,14 @@ import com.kilo.kilo.data.conComas
 import com.kilo.kilo.data.formatoCorto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import com.kilo.kilo.ui.common.UiState
+import com.kilo.kilo.ui.common.comoUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class HistorialViewModel @Inject constructor(
@@ -23,15 +26,16 @@ class HistorialViewModel @Inject constructor(
     private val filtro = MutableStateFlow(FILTRO_TODOS)
     private val error = MutableStateFlow<String?>(null)
 
-    val state: StateFlow<HistorialState> = combine(
+    val uiState: StateFlow<UiState<HistorialState>> = combine(
         repositorio.datos,
         filtro,
         error
     ) { datos, filtroElegido, mensaje -> construirEstado(datos, filtroElegido, mensaje) }
+        .comoUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = construirEstado(repositorio.datos.value, FILTRO_TODOS, null)
+            initialValue = UiState.Loading
         )
 
     fun onFiltroChange(nuevo: String) {
@@ -39,7 +43,9 @@ class HistorialViewModel @Inject constructor(
     }
 
     fun onEliminar(id: Long) {
-        error.value = repositorio.eliminarRegistro(id)
+        viewModelScope.launch {
+            error.value = repositorio.eliminarRegistro(id)
+        }
     }
 }
 
@@ -72,4 +78,4 @@ private fun construirEstado(datos: DatosKilo, filtroElegido: String, error: Stri
         registros = registros,
         error = error
     )
-}
+}

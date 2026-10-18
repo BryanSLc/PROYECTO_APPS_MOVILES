@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.UiStateContent
 import com.kilo.kilo.ui.theme.KiloTheme
 
 private val ColorVencido = Color(0xFFD32F2F)
@@ -56,13 +57,15 @@ fun MisVehiculosScreen(
     onAgregar: () -> Unit = {},
     viewModel: MisVehiculosViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    MisVehiculosContent(
-        state = state,
-        onAgregar = onAgregar,
-        onSeleccionar = viewModel::onSeleccionar,
-        onEliminar = viewModel::onEliminar
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    UiStateContent(uiState) { state ->
+        MisVehiculosContent(
+            state = state,
+            onAgregar = onAgregar,
+            onSeleccionar = viewModel::onSeleccionar,
+            onEliminar = viewModel::onEliminar
+        )
+    }
 }
 
 @Composable
@@ -257,4 +260,4 @@ private fun MisVehiculosPreview() {
             onEliminar = {}
         )
     }
-}
+}

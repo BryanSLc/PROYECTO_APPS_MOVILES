@@ -33,4 +33,4 @@ class SplashViewModel @Inject constructor() : ViewModel() {
             _state.update { actual -> actual.copy(terminado = true) }
         }
     }
-}
+}

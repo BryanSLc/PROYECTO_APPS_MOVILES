@@ -15,4 +15,4 @@ interface PreferenciasRepository {
     fun setNotificaciones(activas: Boolean)
 
     fun setUnidadDistancia(unidad: String)
-}
+}

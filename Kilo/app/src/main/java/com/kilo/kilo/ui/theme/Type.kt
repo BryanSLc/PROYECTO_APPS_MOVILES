@@ -14,4 +14,4 @@ val TipografiaKilo = Typography(
     labelLarge = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
     labelMedium = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
     labelSmall = TextStyle(fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold)
-)
+)

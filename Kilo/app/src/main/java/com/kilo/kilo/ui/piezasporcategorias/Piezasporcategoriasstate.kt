@@ -54,4 +54,4 @@ data class PiezasPorCategoriasState(
         get() = estadoAbierto?.let { piezas[it] }.orEmpty()
 
     fun cantidad(estado: EstadoPieza): Int = piezas[estado].orEmpty().size
-}
+}

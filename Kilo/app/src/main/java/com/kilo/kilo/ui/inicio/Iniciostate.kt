@@ -31,4 +31,4 @@ data class InicioState(
         ResumenEstado(EstadoPieza.SIN_DATOS, 1)
     ),
     val mostrarActualizarKm: Boolean = false
-)
+)

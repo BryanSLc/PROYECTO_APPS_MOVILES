@@ -23,4 +23,4 @@ data class DetalleMantenimientoState(
     val mostrarRegistro: Boolean = false,
     /** id (Long, como texto) de la pieza que se está viendo; se pasa a la hoja de Registrar. */
     val tipoClave: String = "1"
-)
+)

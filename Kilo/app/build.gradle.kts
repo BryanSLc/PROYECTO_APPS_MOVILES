@@ -51,6 +51,12 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
+    implementation(libs.androidx.navigation.compose)
+
+    // Room (base de datos local, única fuente de verdad)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

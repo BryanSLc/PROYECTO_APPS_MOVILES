@@ -22,4 +22,4 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindPreferenciasRepository(impl: OfflinePreferenciasRepository): PreferenciasRepository
-}
+}

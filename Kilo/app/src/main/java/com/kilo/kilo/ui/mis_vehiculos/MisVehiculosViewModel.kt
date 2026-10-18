@@ -8,11 +8,14 @@ import com.kilo.kilo.data.KiloRepository
 import com.kilo.kilo.data.Situacion
 import com.kilo.kilo.data.conComas
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kilo.kilo.ui.common.UiState
+import com.kilo.kilo.ui.common.comoUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -22,24 +25,27 @@ class MisVehiculosViewModel @Inject constructor(
 
     private val error = MutableStateFlow<String?>(null)
 
-    val state: StateFlow<MisVehiculosState> = combine(
+    val uiState: StateFlow<UiState<MisVehiculosState>> = combine(
         repositorio.datos,
         error
     ) { datos, mensaje -> construirEstado(datos, mensaje) }
+        .comoUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = construirEstado(repositorio.datos.value, null)
+            initialValue = UiState.Loading
         )
 
     /** Toca un vehículo: pasa a ser el que se muestra en Inicio. */
     fun onSeleccionar(id: Long) {
         error.value = null
-        repositorio.seleccionarVehiculo(id)
+        viewModelScope.launch { repositorio.seleccionarVehiculo(id) }
     }
 
     fun onEliminar(id: Long) {
-        error.value = repositorio.eliminarVehiculo(id)
+        viewModelScope.launch {
+            error.value = repositorio.eliminarVehiculo(id)
+        }
     }
 }
 

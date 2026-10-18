@@ -64,4 +64,4 @@ object CalculoMantenimiento {
     /** Estados del vehículo activo. */
     fun estadosDe(datos: DatosKilo, hoy: LocalDate = LocalDate.now()): List<EstadoDePieza> =
         estadosDe(datos.vehiculo, hoy)
-}
+}

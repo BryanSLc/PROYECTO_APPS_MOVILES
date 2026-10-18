@@ -122,4 +122,4 @@ fun LocalDate.formatoCorto(): String = format(FORMATO_CORTO).replace(".", "")
 
 val FORMATO_FECHA_SALIDA: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
-val FORMATO_FECHA_ENTRADA: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+val FORMATO_FECHA_ENTRADA: DateTimeFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")

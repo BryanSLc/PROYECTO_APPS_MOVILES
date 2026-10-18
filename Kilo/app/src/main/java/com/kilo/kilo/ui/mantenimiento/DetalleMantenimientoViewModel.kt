@@ -11,6 +11,8 @@ import com.kilo.kilo.data.conComas
 import com.kilo.kilo.data.formatoCorto
 import com.kilo.kilo.ui.piezasporcategorias.aEstadoPieza
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kilo.kilo.ui.common.UiState
+import com.kilo.kilo.ui.common.comoUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -29,14 +31,15 @@ class DetalleMantenimientoViewModel @Inject constructor(
 
     private val mostrarRegistro = MutableStateFlow(false)
 
-    val state: StateFlow<DetalleMantenimientoState> = combine(
+    val uiState: StateFlow<UiState<DetalleMantenimientoState>> = combine(
         repositorio.datos,
         mostrarRegistro
     ) { datos, mostrar -> construirEstado(piezaId, datos, mostrar) }
+        .comoUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = construirEstado(piezaId, repositorio.datos.value, false)
+            initialValue = UiState.Loading
         )
 
     /** "Marcar como realizado" abre la hoja Registrar mantenimiento. */
@@ -88,4 +91,4 @@ private fun construirEstado(
         mostrarRegistro = mostrarRegistro,
         tipoClave = pieza.id.toString()
     )
-}
+}

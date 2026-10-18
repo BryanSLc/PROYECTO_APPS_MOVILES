@@ -1,29 +1,53 @@
 package com.kilo.kilo.ui.registrarmantenimiento
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.kilo.kilo.data.FORMATO_FECHA_ENTRADA
 import com.kilo.kilo.data.FORMATO_FECHA_SALIDA
 import com.kilo.kilo.data.KiloRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import javax.inject.Inject
+
+/** Eventos de una sola vez: la hoja se cierra al guardar. */
+sealed interface RegistrarMantenimientoEvento {
+    object Guardado : RegistrarMantenimientoEvento
+}
 
 @HiltViewModel
 class RegistrarMantenimientoViewModel @Inject constructor(
     private val repositorio: KiloRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(estadoInicial(null))
+    private val _state = MutableStateFlow(estadoVacio())
     val state: StateFlow<RegistrarMantenimientoState> = _state.asStateFlow()
 
-    /** Al abrir la hoja: pieza elegida, fecha de hoy y el km actual del vehículo. */
+    private val _eventos = Channel<RegistrarMantenimientoEvento>(Channel.BUFFERED)
+    val eventos: Flow<RegistrarMantenimientoEvento> = _eventos.receiveAsFlow()
+
+    /** Al abrir la hoja: pieza elegida, fecha de hoy y el km actual del vehículo (leídos de Room). */
     fun preparar(claveTipo: String?) {
-        _state.value = estadoInicial(claveTipo)
+        viewModelScope.launch {
+            val vehiculo = repositorio.datos.first().vehiculo
+            val pieza = vehiculo.piezas.firstOrNull { it.id.toString() == claveTipo }
+                ?: vehiculo.piezas.first()
+            _state.value = RegistrarMantenimientoState(
+                tipos = vehiculo.piezas.map { it.nombre },
+                tipoSeleccionado = pieza.nombre,
+                fecha = LocalDate.now().format(FORMATO_FECHA_SALIDA),
+                kmDelCambio = vehiculo.km.toString()
+            )
+        }
     }
 
     fun onTipoChange(tipo: String) {
@@ -42,13 +66,9 @@ class RegistrarMantenimientoViewModel @Inject constructor(
         _state.update { it.copy(notas = notas) }
     }
 
-    /** Devuelve true si se guardó (la pantalla cierra la hoja); false si hay algo que corregir. */
-    fun onGuardar(): Boolean {
+    /** Valida y guarda en Room; si sale bien avisa con un evento para cerrar la hoja. */
+    fun onGuardar() {
         val actual = _state.value
-
-        val pieza = repositorio.datos.value.vehiculo.piezas
-            .firstOrNull { it.nombre == actual.tipoSeleccionado }
-            ?: return fallo("Elige qué se cambió")
 
         val fecha = try {
             LocalDate.parse(actual.fecha.trim(), FORMATO_FECHA_ENTRADA)
@@ -59,31 +79,38 @@ class RegistrarMantenimientoViewModel @Inject constructor(
         val km = actual.kmDelCambio.toIntOrNull()
             ?: return fallo("Escribe el kilometraje del cambio")
 
-        val error = repositorio.registrarMantenimiento(pieza.id, fecha, km, actual.notas)
-        if (error != null) return fallo(error)
+        viewModelScope.launch {
+            val pieza = repositorio.datos.first().vehiculo.piezas
+                .firstOrNull { it.nombre == actual.tipoSeleccionado }
+            if (pieza == null) {
+                fallo("Elige qué se cambió")
+                return@launch
+            }
 
-        _state.value = estadoInicial(null)
-        return true
+            val error = repositorio.registrarMantenimiento(pieza.id, fecha, km, actual.notas)
+            if (error != null) {
+                fallo(error)
+                return@launch
+            }
+
+            _state.value = estadoVacio()
+            _eventos.send(RegistrarMantenimientoEvento.Guardado)
+        }
     }
 
     fun onCancelar() {
-        _state.value = estadoInicial(null)
+        _state.value = estadoVacio()
     }
 
-    private fun fallo(mensaje: String): Boolean {
+    private fun fallo(mensaje: String) {
         _state.update { it.copy(error = mensaje) }
-        return false
     }
 
-    private fun estadoInicial(claveTipo: String?): RegistrarMantenimientoState {
-        val vehiculo = repositorio.datos.value.vehiculo
-        val pieza = vehiculo.piezas.firstOrNull { it.id.toString() == claveTipo }
-            ?: vehiculo.piezas.first()
-        return RegistrarMantenimientoState(
-            tipos = vehiculo.piezas.map { it.nombre },
-            tipoSeleccionado = pieza.nombre,
-            fecha = LocalDate.now().format(FORMATO_FECHA_SALIDA),
-            kmDelCambio = vehiculo.km.toString()
-        )
-    }
+    /** Estado sin datos del vehículo; `preparar()` lo completa cada vez que se abre la hoja. */
+    private fun estadoVacio() = RegistrarMantenimientoState(
+        tipos = emptyList(),
+        tipoSeleccionado = "",
+        fecha = "",
+        kmDelCambio = ""
+    )
 }

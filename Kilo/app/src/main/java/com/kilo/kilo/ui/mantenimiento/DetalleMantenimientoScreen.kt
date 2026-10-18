@@ -46,6 +46,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.UiStateContent
+import com.kilo.kilo.ui.common.datosOrNull
 import com.kilo.kilo.ui.theme.*
 
 @Composable
@@ -54,18 +56,21 @@ fun DetalleMantenimientoScreen(
     onPestanaClick: (Int) -> Unit = {},
     viewModel: DetalleMantenimientoViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    DetalleMantenimientoContent(
-        state = state,
-        onVolver = onVolver,
-        onMarcarRealizado = viewModel::onMarcarRealizado,
-        onPestanaClick = onPestanaClick
-    )
+    UiStateContent(uiState) { state ->
+        DetalleMantenimientoContent(
+            state = state,
+            onVolver = onVolver,
+            onMarcarRealizado = viewModel::onMarcarRealizado,
+            onPestanaClick = onPestanaClick
+        )
+    }
 
-    if (state.mostrarRegistro) {
+    val datos = uiState.datosOrNull()
+    if (datos?.mostrarRegistro == true) {
         RegistrarMantenimiento(
-            tipoInicial = state.tipoClave,
+            tipoInicial = datos.tipoClave,
             onCancelar = viewModel::onCerrarRegistro,
             onGuardar = viewModel::onCerrarRegistro
         )
@@ -266,4 +271,4 @@ private fun DetalleMantenimientoPreview() {
             onMarcarRealizado = {}
         )
     }
-}
+}

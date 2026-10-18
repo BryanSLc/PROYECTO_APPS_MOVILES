@@ -6,6 +6,8 @@ import com.kilo.kilo.data.CalculoMantenimiento
 import com.kilo.kilo.data.DatosKilo
 import com.kilo.kilo.data.KiloRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kilo.kilo.ui.common.UiState
+import com.kilo.kilo.ui.common.comoUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +22,15 @@ class PiezasPorCategoriasViewModel @Inject constructor(
 
     private val estadoAbierto = MutableStateFlow<EstadoPieza?>(null)
 
-    val state: StateFlow<PiezasPorCategoriasState> = combine(
+    val uiState: StateFlow<UiState<PiezasPorCategoriasState>> = combine(
         repositorio.datos,
         estadoAbierto
     ) { datos, abierto -> PiezasPorCategoriasState(abierto, agrupar(datos)) }
+        .comoUiState()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PiezasPorCategoriasState(null, agrupar(repositorio.datos.value))
+            initialValue = UiState.Loading
         )
 
     fun onTarjetaClick(estado: EstadoPieza) {
@@ -44,4 +47,4 @@ private fun agrupar(datos: DatosKilo): Map<EstadoPieza, List<PiezaResumen>> {
     return EstadoPieza.values().associateWith { estado ->
         porEstado[estado].orEmpty().map { PiezaResumen(it.pieza.nombre, it.detalle, it.pieza.id.toString()) }
     }
-}
+}

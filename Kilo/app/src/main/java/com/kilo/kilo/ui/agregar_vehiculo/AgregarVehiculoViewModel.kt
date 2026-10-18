@@ -1,14 +1,24 @@
 package com.kilo.kilo.ui.agregar_vehiculo
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.kilo.kilo.data.KiloRepository
 import com.kilo.kilo.data.NuevaPieza
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+/** Eventos de una sola vez: la pantalla vuelve atrás al guardar. */
+sealed interface AgregarVehiculoEvento {
+    object Guardado : AgregarVehiculoEvento
+}
 
 @HiltViewModel
 class AgregarVehiculoViewModel @Inject constructor(
@@ -17,6 +27,9 @@ class AgregarVehiculoViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(AgregarVehiculoState())
     val state: StateFlow<AgregarVehiculoState> = _state.asStateFlow()
+
+    private val _eventos = Channel<AgregarVehiculoEvento>(Channel.BUFFERED)
+    val eventos: Flow<AgregarVehiculoEvento> = _eventos.receiveAsFlow()
 
     fun onMarcaChange(valor: String) {
         _state.update { it.copy(marca = valor, error = null) }
@@ -79,8 +92,8 @@ class AgregarVehiculoViewModel @Inject constructor(
 
     // ------------------------------------------------------------ guardar
 
-    /** true si se guardó (la pantalla vuelve atrás); false si hay algo que corregir. */
-    fun onGuardar(): Boolean {
+    /** Valida y guarda en Room; si sale bien avisa con un evento para volver atrás. */
+    fun onGuardar() {
         val actual = _state.value
         if (!actual.puedeGuardar) return fallo("Completa marca, modelo, placa y kilometraje")
 
@@ -114,21 +127,24 @@ class AgregarVehiculoViewModel @Inject constructor(
         val base = if (modelo.startsWith(marca, ignoreCase = true)) modelo else "$marca $modelo"
         val nombre = listOf(base, actual.anio.trim()).filter { it.isNotBlank() }.joinToString(" ")
 
-        val error = repositorio.agregarVehiculo(
-            nombre = nombre,
-            placa = actual.placa.trim(),
-            carroceria = actual.tipoSeleccionado,
-            km = km,
-            piezas = piezas
-        )
-        if (error != null) return fallo(error)
-
-        _state.value = AgregarVehiculoState()
-        return true
+        viewModelScope.launch {
+            val error = repositorio.agregarVehiculo(
+                nombre = nombre,
+                placa = actual.placa.trim(),
+                carroceria = actual.tipoSeleccionado,
+                km = km,
+                piezas = piezas
+            )
+            if (error != null) {
+                fallo(error)
+                return@launch
+            }
+            _state.value = AgregarVehiculoState()
+            _eventos.send(AgregarVehiculoEvento.Guardado)
+        }
     }
 
-    private fun fallo(mensaje: String): Boolean {
+    private fun fallo(mensaje: String) {
         _state.update { it.copy(error = mensaje) }
-        return false
     }
 }

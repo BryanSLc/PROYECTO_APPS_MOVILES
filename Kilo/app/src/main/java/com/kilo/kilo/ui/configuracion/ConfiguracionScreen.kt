@@ -22,16 +22,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.UiStateContent
 import com.kilo.kilo.ui.theme.KiloTheme
 
 @Composable
 fun ConfiguracionScreen(viewModel: ConfiguracionViewModel = hiltViewModel()) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-    ConfiguracionContent(
-        state = state,
-        onNotificacionesChange = viewModel::onNotificacionesChange,
-        onUnidadChange = viewModel::onUnidadChange
-    )
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    UiStateContent(uiState) { state ->
+        ConfiguracionContent(
+            state = state,
+            onNotificacionesChange = viewModel::onNotificacionesChange,
+            onUnidadChange = viewModel::onUnidadChange
+        )
+    }
 }
 
 @Composable
@@ -142,4 +145,4 @@ private fun ConfiguracionPreview() {
             onUnidadChange = {}
         )
     }
-}
+}

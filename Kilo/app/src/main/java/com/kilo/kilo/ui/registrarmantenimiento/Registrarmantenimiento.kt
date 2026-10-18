@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.rememberUpdatedState
 import com.kilo.kilo.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +57,12 @@ fun RegistrarMantenimiento(
 
     // Al abrirse, deja elegida la pieza, la fecha de hoy y el km actual
     LaunchedEffect(Unit) { viewModel.preparar(tipoInicial) }
+
+    // Evento de una sola vez: cuando se guardó bien, se cierra la hoja
+    val alGuardar by rememberUpdatedState(onGuardar)
+    LaunchedEffect(Unit) {
+        viewModel.eventos.collect { alGuardar() }
+    }
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -76,10 +83,7 @@ fun RegistrarMantenimiento(
                 viewModel.onCancelar()
                 onCancelar()
             },
-            onGuardar = {
-                // Solo se cierra si se guardó bien; si no, se muestra el error
-                if (viewModel.onGuardar()) onGuardar()
-            }
+            onGuardar = viewModel::onGuardar
         )
     }
 }
@@ -239,4 +243,4 @@ private fun RegistrarPreview() {
             )
         }
     }
-}
+}

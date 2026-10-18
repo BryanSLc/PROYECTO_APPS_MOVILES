@@ -26,4 +26,4 @@ fun KiloTheme(content: @Composable () -> Unit) {
         typography = TipografiaKilo,
         content = content
     )
-}
+}
