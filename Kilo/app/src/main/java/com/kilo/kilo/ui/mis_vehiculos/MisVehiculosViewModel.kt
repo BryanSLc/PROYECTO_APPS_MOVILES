@@ -6,7 +6,7 @@ import com.kilo.kilo.data.CalculoMantenimiento
 import com.kilo.kilo.data.DatosKilo
 import com.kilo.kilo.data.KiloRepository
 import com.kilo.kilo.data.Situacion
-import com.kilo.kilo.data.conComas
+import com.kilo.kilo.data.enKm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import com.kilo.kilo.ui.common.UiState
 import com.kilo.kilo.ui.common.comoUiState
@@ -57,7 +57,7 @@ private fun construirEstado(datos: DatosKilo, error: String?): MisVehiculosState
                 nombre = v.nombre,
                 placa = v.placa,
                 tipo = v.carroceria,
-                kilometraje = "${v.km.conComas()} km",
+                kilometraje = v.km.enKm(),
                 mantenimientos = CalculoMantenimiento.estadosDe(v).map { e ->
                     MantenimientoUi(
                         nombre = e.pieza.nombre,

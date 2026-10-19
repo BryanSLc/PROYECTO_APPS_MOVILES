@@ -16,7 +16,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -25,33 +24,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.ui.common.UiState
 import com.kilo.kilo.ui.common.UiStateContent
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.layout.height
 import com.kilo.kilo.ui.theme.KiloTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActualizarKmBottomSheet(
-    onDismiss: () -> Unit,
-    viewModel: ActualizarKmViewModel = hiltViewModel()
+    uiState: UiState<ActualizarKmState>,
+    onKmChange: (String) -> Unit,
+    onCancelar: () -> Unit,
+    onConfirmar: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
-    // Evento de una sola vez: cuando se guardó bien, se cierra la hoja
-    val alCerrar by rememberUpdatedState(onDismiss)
-    LaunchedEffect(Unit) {
-        viewModel.eventos.collect { alCerrar() }
-    }
-
     ModalBottomSheet(
-        onDismissRequest = {
-            viewModel.onCancelar()
-            onDismiss()
-        },
+        onDismissRequest = onCancelar,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
         UiStateContent(
@@ -60,12 +47,9 @@ fun ActualizarKmBottomSheet(
         ) { state ->
             ActualizarKmContent(
                 state = state,
-                onKmChange = viewModel::onKmChange,
-                onCancelar = {
-                    viewModel.onCancelar()
-                    onDismiss()
-                },
-                onConfirmar = viewModel::onConfirmar
+                onKmChange = onKmChange,
+                onCancelar = onCancelar,
+                onConfirmar = onConfirmar
             )
         }
     }

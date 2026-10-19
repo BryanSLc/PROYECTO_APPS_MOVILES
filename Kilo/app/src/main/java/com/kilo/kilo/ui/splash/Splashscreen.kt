@@ -27,7 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.theme.Blanco
 import com.kilo.kilo.ui.theme.KiloTheme
-import com.kilo.kilo.ui.theme.Morado
+import com.kilo.kilo.ui.theme.MoradoMarca
 
 @Composable
 fun SplashScreen(
@@ -48,7 +48,7 @@ fun SplashContent(state: SplashState) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Morado),
+            .background(MoradoMarca),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -59,7 +59,7 @@ fun SplashContent(state: SplashState) {
                     .background(Blanco),
                 contentAlignment = Alignment.Center
             ) {
-                Text("K", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, color = Morado)
+                Text("K", fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, color = MoradoMarca)
             }
             Spacer(Modifier.height(16.dp))
             Text("Kilo", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Blanco)

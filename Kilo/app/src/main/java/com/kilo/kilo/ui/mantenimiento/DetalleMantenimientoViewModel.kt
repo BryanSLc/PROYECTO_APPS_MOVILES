@@ -7,7 +7,7 @@ import com.kilo.kilo.data.CalculoMantenimiento
 import com.kilo.kilo.data.DatosKilo
 import com.kilo.kilo.data.KiloRepository
 import com.kilo.kilo.data.RegistroMantenimiento
-import com.kilo.kilo.data.conComas
+import com.kilo.kilo.data.enKm
 import com.kilo.kilo.data.formatoCorto
 import com.kilo.kilo.ui.piezasporcategorias.aEstadoPieza
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -60,7 +60,7 @@ private fun construirEstado(
     val vehiculo = datos.vehiculo
     val pieza = vehiculo.piezas.firstOrNull { it.id == piezaId } ?: vehiculo.piezas.first()
     val e = CalculoMantenimiento.estadoDe(pieza, vehiculo)
-    val km = { valor: Int? -> valor?.let { "${it.conComas()} km" } ?: "—" }
+    val km = { valor: Int? -> valor?.enKm() ?: "—" }
 
     val historial = vehiculo.registros
         .filter { it.piezaId == pieza.id }
@@ -79,7 +79,7 @@ private fun construirEstado(
 
     return DetalleMantenimientoState(
         titulo = pieza.nombre,
-        intervalo = pieza.descripcionIntervalo,
+        intervalo = pieza.descripcionIntervalo(),
         estado = e.situacion.aEstadoPieza(),
         etiquetaEstado = e.situacion.etiqueta,
         progreso = e.progreso.coerceIn(0f, 1f),

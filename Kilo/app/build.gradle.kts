@@ -53,6 +53,9 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.3.0")
     implementation(libs.androidx.navigation.compose)
 
+    // WorkManager: revisión diaria de mantenimientos próximos (avisos con la app cerrada)
+    implementation(libs.androidx.work.runtime.ktx)
+
     // Room (base de datos local, única fuente de verdad)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

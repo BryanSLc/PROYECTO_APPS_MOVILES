@@ -31,8 +31,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -40,50 +38,33 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.rememberUpdatedState
 import com.kilo.kilo.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarMantenimiento(
+    state: RegistrarMantenimientoState,
+    onTipoChange: (String) -> Unit,
+    onFechaChange: (String) -> Unit,
+    onKmChange: (String) -> Unit,
+    onNotasChange: (String) -> Unit,
     onCancelar: () -> Unit,
-    onGuardar: () -> Unit,
-    tipoInicial: String? = null,
-    viewModel: RegistrarMantenimientoViewModel = hiltViewModel()
+    onGuardar: () -> Unit
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-    // Al abrirse, deja elegida la pieza, la fecha de hoy y el km actual
-    LaunchedEffect(Unit) { viewModel.preparar(tipoInicial) }
-
-    // Evento de una sola vez: cuando se guardó bien, se cierra la hoja
-    val alGuardar by rememberUpdatedState(onGuardar)
-    LaunchedEffect(Unit) {
-        viewModel.eventos.collect { alGuardar() }
-    }
-
     ModalBottomSheet(
-        onDismissRequest = {
-            viewModel.onCancelar()
-            onCancelar()
-        },
+        onDismissRequest = onCancelar,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = Superficie,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         RegistrarMantenimientoContent(
             state = state,
-            onTipoChange = viewModel::onTipoChange,
-            onFechaChange = viewModel::onFechaChange,
-            onKmChange = viewModel::onKmChange,
-            onNotasChange = viewModel::onNotasChange,
-            onCancelar = {
-                viewModel.onCancelar()
-                onCancelar()
-            },
-            onGuardar = viewModel::onGuardar
+            onTipoChange = onTipoChange,
+            onFechaChange = onFechaChange,
+            onKmChange = onKmChange,
+            onNotasChange = onNotasChange,
+            onCancelar = onCancelar,
+            onGuardar = onGuardar
         )
     }
 }
@@ -172,7 +153,7 @@ fun RegistrarMantenimientoContent(
                 onClick = onGuardar,
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Morado, contentColor = Blanco)
+                colors = ButtonDefaults.buttonColors(containerColor = Morado, contentColor = SobreMorado)
             ) { Text("Guardar", fontWeight = FontWeight.Bold) }
         }
     }

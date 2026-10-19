@@ -26,7 +26,8 @@ FUNCIONES PRINCIPALES
   en kilómetros y en fecha.
 - Registro de mantenimientos realizados: tipo, fecha, kilometraje y nota.
 - Historial completo con filtro por tipo y opción de eliminar registros.
-- Configuración: notificaciones y unidad de distancia (km / mi).
+- Configuración: tema claro / oscuro y notificaciones de mantenimientos próximos.
+- Todas las distancias se manejan en kilómetros (km).
 
 
 MANTENIMIENTOS INCLUIDOS
@@ -50,13 +51,24 @@ Al actualizar el kilometraje se recalcula el avance:
 Se toma el mayor de los dos para definir el estado.
 
 
+NOTIFICACIONES
+--------------
+Si las notificaciones están activadas en Configuración, la app avisa en el
+teléfono cuando una pieza pasa al estado "Próximo" (80 % a 99 % del intervalo):
+"<Pieza> está a punto de vencerse". Se avisa una sola vez por pieza y por
+cambio. La revisión se hace al actualizar el kilometraje, al registrar un
+mantenimiento, al abrir la app y una vez al día en segundo plano.
+En Android 13+ se pide el permiso de notificaciones la primera vez.
+
+
 TECNOLOGÍAS
 -----------
 - Lenguaje: Kotlin
 - Interfaz: Jetpack Compose + Material 3
 - Arquitectura: MVVM (Vista - ViewModel - Repositorio - Datos)
 - Base de datos local: Room (SQLite), única fuente de verdad (Flow + suspend)
-- Preferencias: SharedPreferences (ajustes simples)
+- Preferencias: SharedPreferences (tema, notificaciones)
+- Avisos: NotificationManager + WorkManager (revisión diaria)
 - Inyección de dependencias: Hilt
 - Estado de UI: StateFlow con UiState (Loading / Success / Error)
 - Navegación: Navigation Compose (NavHost + NavController)
@@ -92,6 +104,5 @@ CÓMO EJECUTAR
 
 PENDIENTES
 ----------
-- Programar las notificaciones (actualmente solo se guarda la preferencia).
 - Lectura del odómetro con la cámara.
 - Pruebas con usuarios.

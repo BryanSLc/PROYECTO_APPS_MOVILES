@@ -1,10 +1,14 @@
 package com.kilo.kilo.ui.agregar_vehiculo
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,10 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.FilterChip
@@ -40,7 +48,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberUpdatedState
+import com.kilo.kilo.ui.theme.Borde
+import com.kilo.kilo.ui.theme.BordeCampo
 import com.kilo.kilo.ui.theme.KiloTheme
+import com.kilo.kilo.ui.theme.Superficie
+import com.kilo.kilo.ui.theme.SuperficieSuave
+import com.kilo.kilo.ui.theme.TintaMedia
 
 @Composable
 fun AgregarVehiculoScreen(
@@ -74,6 +87,32 @@ fun AgregarVehiculoScreen(
     )
 }
 
+private val FormaCampo = RoundedCornerShape(12.dp)
+
+/** Campos con fondo blanco y borde gris bien marcado; al enfocarse, borde morado más grueso. */
+@Composable
+private fun coloresCampo() = OutlinedTextFieldDefaults.colors(
+    focusedContainerColor = Superficie,
+    unfocusedContainerColor = Superficie,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = BordeCampo,
+    focusedLabelColor = MaterialTheme.colorScheme.primary,
+    unfocusedLabelColor = TintaMedia,
+    cursorColor = MaterialTheme.colorScheme.primary
+)
+
+@Composable
+private fun TarjetaSeccion(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Superficie),
+        border = BorderStroke(1.dp, Borde),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) { content() }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AgregarVehiculoContent(
     state: AgregarVehiculoState,
@@ -114,7 +153,7 @@ fun AgregarVehiculoContent(
             modifier = Modifier.padding(bottom = 12.dp)
         )
 
-        Card(modifier = Modifier.fillMaxWidth()) {
+        TarjetaSeccion {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -128,7 +167,7 @@ fun AgregarVehiculoContent(
                     Campo("Placa", state.placa, onPlacaChange, Modifier.weight(1f))
                 }
                 Campo(
-                    etiqueta = "Kilometraje actual",
+                    etiqueta = "Kilometraje actual (km)",
                     valor = state.kilometraje,
                     onCambio = onKilometrajeChange,
                     modifier = Modifier.fillMaxWidth(),
@@ -137,33 +176,32 @@ fun AgregarVehiculoContent(
 
                 Text(
                     text = "Tipo de vehículo",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TintaMedia
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     state.tipos.forEach { tipo ->
                         FilterChip(
                             selected = tipo == state.tipoSeleccionado,
                             onClick = { onTipoChange(tipo) },
-                            label = { Text(tipo) }
+                            label = { Text(tipo, maxLines = 1, softWrap = false) }
                         )
                     }
                 }
             }
         }
 
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp)
-        ) {
+        TarjetaSeccion(modifier = Modifier.padding(top = 12.dp)) {
             Column(
                 modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = "Piezas y límites de cambio",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
@@ -187,7 +225,9 @@ fun AgregarVehiculoContent(
 
                 OutlinedButton(
                     onClick = onAgregarPieza,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
                 ) {
                     Text("+ Agregar pieza")
                 }
@@ -203,14 +243,18 @@ fun AgregarVehiculoContent(
             )
         }
 
+        Spacer(Modifier.height(16.dp))
         Button(
             onClick = onGuardar,
+            shape = RoundedCornerShape(14.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp)
+                .height(52.dp)
+                .padding(vertical = 0.dp)
         ) {
             Text("Guardar vehículo")
         }
+        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -223,57 +267,68 @@ private fun PiezaEditor(
     onUltimoKmChange: (String) -> Unit,
     onQuitar: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant)
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = pieza.nombre,
-                onValueChange = onNombreChange,
-                label = { Text("Pieza") },
-                singleLine = true,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onQuitar) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Quitar pieza",
-                    tint = MaterialTheme.colorScheme.error
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = SuperficieSuave,
+        border = BorderStroke(1.dp, Borde)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = pieza.nombre,
+                    onValueChange = onNombreChange,
+                    label = { Text("Pieza") },
+                    singleLine = true,
+                    shape = FormaCampo,
+                    colors = coloresCampo(),
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onQuitar) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Quitar pieza",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = pieza.limiteKm,
+                    onValueChange = onLimiteChange,
+                    label = { Text("Cambio cada") },
+                    singleLine = true,
+                    suffix = { Text("km") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = FormaCampo,
+                    colors = coloresCampo(),
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = pieza.meses,
+                    onValueChange = onMesesChange,
+                    label = { Text("Meses (opc.)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    shape = FormaCampo,
+                    colors = coloresCampo(),
+                    modifier = Modifier.weight(1f)
                 )
             }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
-                value = pieza.limiteKm,
-                onValueChange = onLimiteChange,
-                label = { Text("Cambio cada") },
+                value = pieza.ultimoKm,
+                onValueChange = onUltimoKmChange,
+                label = { Text("Último cambio (opcional)") },
                 singleLine = true,
                 suffix = { Text("km") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = pieza.meses,
-                onValueChange = onMesesChange,
-                label = { Text("Meses (opc.)") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
+                shape = FormaCampo,
+                colors = coloresCampo(),
+                modifier = Modifier.fillMaxWidth()
             )
         }
-        OutlinedTextField(
-            value = pieza.ultimoKm,
-            onValueChange = onUltimoKmChange,
-            label = { Text("Último cambio (opcional)") },
-            singleLine = true,
-            suffix = { Text("km") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth()
-        )
     }
 }
 
@@ -293,6 +348,8 @@ private fun Campo(
         keyboardOptions = KeyboardOptions(
             keyboardType = if (numerico) KeyboardType.Number else KeyboardType.Text
         ),
+        shape = FormaCampo,
+        colors = coloresCampo(),
         modifier = modifier
     )
 }

@@ -23,26 +23,32 @@ class OfflinePreferenciasRepository @Inject constructor(
         guardar(_preferencias.value.copy(notificacionesActivas = activas))
     }
 
-    override fun setUnidadDistancia(unidad: String) {
-        if (unidad != "km" && unidad != "mi") return
-        guardar(_preferencias.value.copy(unidadDistancia = unidad))
+    override fun setTemaOscuro(oscuro: Boolean) {
+        guardar(_preferencias.value.copy(temaOscuro = oscuro))
+    }
+
+    override fun marcarPermisoNotificacionesSolicitado() {
+        guardar(_preferencias.value.copy(permisoNotificacionesSolicitado = true))
     }
 
     private fun guardar(nuevas: Preferencias) {
         _preferencias.value = nuevas
         prefs.edit()
             .putBoolean(CLAVE_NOTIFICACIONES, nuevas.notificacionesActivas)
-            .putString(CLAVE_UNIDAD, nuevas.unidadDistancia)
+            .putBoolean(CLAVE_TEMA_OSCURO, nuevas.temaOscuro)
+            .putBoolean(CLAVE_PERMISO_SOLICITADO, nuevas.permisoNotificacionesSolicitado)
             .apply()
     }
 
     private fun cargar() = Preferencias(
         notificacionesActivas = prefs.getBoolean(CLAVE_NOTIFICACIONES, true),
-        unidadDistancia = prefs.getString(CLAVE_UNIDAD, "km") ?: "km"
+        temaOscuro = prefs.getBoolean(CLAVE_TEMA_OSCURO, false),
+        permisoNotificacionesSolicitado = prefs.getBoolean(CLAVE_PERMISO_SOLICITADO, false)
     )
 
     private companion object {
         const val CLAVE_NOTIFICACIONES = "notificaciones"
-        const val CLAVE_UNIDAD = "unidad"
+        const val CLAVE_TEMA_OSCURO = "tema_oscuro"
+        const val CLAVE_PERMISO_SOLICITADO = "permiso_notificaciones_solicitado"
     }
-}
+}

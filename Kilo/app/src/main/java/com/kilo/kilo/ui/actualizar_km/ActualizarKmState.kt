@@ -2,6 +2,7 @@ package com.kilo.kilo.ui.actualizar_km
 
 data class ActualizarKmState(
     val vehiculo: String = "",
+    /** Kilometraje actual del vehículo, en km. */
     val kmActual: Int = 0,
     val kmNuevo: String = "",
     val error: String? = null

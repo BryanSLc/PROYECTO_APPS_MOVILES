@@ -45,6 +45,6 @@ class PiezasPorCategoriasViewModel @Inject constructor(
 private fun agrupar(datos: DatosKilo): Map<EstadoPieza, List<PiezaResumen>> {
     val porEstado = CalculoMantenimiento.estadosDe(datos).groupBy { it.situacion.aEstadoPieza() }
     return EstadoPieza.values().associateWith { estado ->
-        porEstado[estado].orEmpty().map { PiezaResumen(it.pieza.nombre, it.detalle, it.pieza.id.toString()) }
+        porEstado[estado].orEmpty().map { PiezaResumen(it.pieza.nombre, it.detalle(), it.pieza.id.toString()) }
     }
 }

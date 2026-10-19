@@ -1,5 +1,8 @@
 package com.kilo.kilo.ui.configuracion
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,31 +11,49 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Card
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kilo.kilo.notificaciones.tienePermisoNotificaciones
 import com.kilo.kilo.ui.common.UiStateContent
+import com.kilo.kilo.ui.theme.Borde
+import com.kilo.kilo.ui.theme.BordeCampo
 import com.kilo.kilo.ui.theme.KiloTheme
 
 @Composable
 fun ConfiguracionScreen(viewModel: ConfiguracionViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val contexto = LocalContext.current
+
+    // Android 13+ exige el permiso para mostrar notificaciones: se pide al encenderlas
+    val pedirPermiso = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+        viewModel::onPermisoNotificacionesResultado
+    )
+
     UiStateContent(uiState) { state ->
         ConfiguracionContent(
             state = state,
-            onNotificacionesChange = viewModel::onNotificacionesChange,
-            onUnidadChange = viewModel::onUnidadChange
+            onNotificacionesChange = { activar ->
+                if (activar && !contexto.tienePermisoNotificaciones()) {
+                    pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+                } else {
+                    viewModel.onNotificacionesChange(activar)
+                }
+            },
+            onTemaOscuroChange = viewModel::onTemaOscuroChange
         )
     }
 }
@@ -41,7 +62,7 @@ fun ConfiguracionScreen(viewModel: ConfiguracionViewModel = hiltViewModel()) {
 fun ConfiguracionContent(
     state: ConfiguracionState,
     onNotificacionesChange: (Boolean) -> Unit,
-    onUnidadChange: (String) -> Unit
+    onTemaOscuroChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -79,14 +100,15 @@ fun ConfiguracionContent(
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Avisos de mantenimientos próximos",
+                        text = "Avisa cuando una pieza esté a punto de vencerse",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(
                     checked = state.notificacionesActivas,
-                    onCheckedChange = onNotificacionesChange
+                    onCheckedChange = onNotificacionesChange,
+                    colors = kiloSwitchColors()
                 )
             }
 
@@ -101,28 +123,21 @@ fun ConfiguracionContent(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Unidad de distancia",
+                        text = "Tema oscuro",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
-                        text = "Afecta todas las pantallas",
+                        text = "Cambia entre el modo claro y el oscuro",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = state.unidadDistancia == "km",
-                        onClick = { onUnidadChange("km") },
-                        label = { Text("km") }
-                    )
-                    FilterChip(
-                        selected = state.unidadDistancia == "mi",
-                        onClick = { onUnidadChange("mi") },
-                        label = { Text("mi") }
-                    )
-                }
+                Switch(
+                    checked = state.temaOscuro,
+                    onCheckedChange = onTemaOscuroChange,
+                    colors = kiloSwitchColors()
+                )
             }
         }
 
@@ -135,6 +150,14 @@ fun ConfiguracionContent(
     }
 }
 
+/** Colores del switch apagado con buen contraste en tema claro y oscuro. */
+@Composable
+private fun kiloSwitchColors() = SwitchDefaults.colors(
+    uncheckedThumbColor = BordeCampo,
+    uncheckedTrackColor = Borde,
+    uncheckedBorderColor = BordeCampo
+)
+
 @Preview(showBackground = true)
 @Composable
 private fun ConfiguracionPreview() {
@@ -142,7 +165,7 @@ private fun ConfiguracionPreview() {
         ConfiguracionContent(
             state = ConfiguracionState(),
             onNotificacionesChange = {},
-            onUnidadChange = {}
+            onTemaOscuroChange = {}
         )
     }
-}
+}

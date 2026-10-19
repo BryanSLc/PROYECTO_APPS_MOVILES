@@ -4,9 +4,12 @@ import kotlinx.coroutines.flow.StateFlow
 
 /** Preferencias del usuario (pantalla Configuración). */
 data class Preferencias(
+    /** Avisa cuando una pieza pasa a "Próximo" (a punto de vencerse). */
     val notificacionesActivas: Boolean = true,
-    /** "km" o "mi" */
-    val unidadDistancia: String = "km"
+    /** true = tema oscuro, false = tema claro. */
+    val temaOscuro: Boolean = false,
+    /** Para pedir el permiso de notificaciones una sola vez al abrir la app. */
+    val permisoNotificacionesSolicitado: Boolean = false
 )
 
 interface PreferenciasRepository {
@@ -14,5 +17,7 @@ interface PreferenciasRepository {
 
     fun setNotificaciones(activas: Boolean)
 
-    fun setUnidadDistancia(unidad: String)
-}
+    fun setTemaOscuro(oscuro: Boolean)
+
+    fun marcarPermisoNotificacionesSolicitado()
+}

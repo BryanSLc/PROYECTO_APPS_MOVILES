@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kilo.kilo.data.DatosKilo
 import com.kilo.kilo.data.KiloRepository
 import com.kilo.kilo.data.RegistroMantenimiento
-import com.kilo.kilo.data.conComas
+import com.kilo.kilo.data.enKm
 import com.kilo.kilo.data.formatoCorto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -49,7 +49,11 @@ class HistorialViewModel @Inject constructor(
     }
 }
 
-private fun construirEstado(datos: DatosKilo, filtroElegido: String, error: String?): HistorialState {
+private fun construirEstado(
+    datos: DatosKilo,
+    filtroElegido: String,
+    error: String?
+): HistorialState {
     val vehiculo = datos.vehiculo
     val nombres = vehiculo.piezas.associate { it.id to it.nombre }
     val filtros = listOf(FILTRO_TODOS) + vehiculo.piezas.map { it.nombre }
@@ -66,7 +70,7 @@ private fun construirEstado(datos: DatosKilo, filtroElegido: String, error: Stri
                 abreviatura = nombre.take(3).uppercase(),
                 titulo = nombre,
                 fecha = r.fecha.formatoCorto(),
-                kilometraje = "${r.km.conComas()} km",
+                kilometraje = r.km.enKm(),
                 nota = r.nota
             )
         }

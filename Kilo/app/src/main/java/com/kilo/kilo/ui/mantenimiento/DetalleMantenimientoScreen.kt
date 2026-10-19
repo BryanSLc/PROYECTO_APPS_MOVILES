@@ -45,6 +45,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.LaunchedEffect
+import com.kilo.kilo.ui.registrarmantenimiento.RegistrarMantenimientoViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.common.UiStateContent
 import com.kilo.kilo.ui.common.datosOrNull
@@ -54,7 +56,8 @@ import com.kilo.kilo.ui.theme.*
 fun DetalleMantenimientoScreen(
     onVolver: () -> Unit = {},
     onPestanaClick: (Int) -> Unit = {},
-    viewModel: DetalleMantenimientoViewModel = hiltViewModel()
+    viewModel: DetalleMantenimientoViewModel = hiltViewModel(),
+    registrarViewModel: RegistrarMantenimientoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -69,10 +72,26 @@ fun DetalleMantenimientoScreen(
 
     val datos = uiState.datosOrNull()
     if (datos?.mostrarRegistro == true) {
+        val registrarState by registrarViewModel.state.collectAsStateWithLifecycle()
+
+        // Al abrirse, deja elegida la pieza, la fecha de hoy y el km actual
+        LaunchedEffect(Unit) { registrarViewModel.preparar(datos.tipoClave) }
+        // Evento de una sola vez: cuando se guardó bien, se cierra la hoja
+        LaunchedEffect(Unit) {
+            registrarViewModel.eventos.collect { viewModel.onCerrarRegistro() }
+        }
+
         RegistrarMantenimiento(
-            tipoInicial = datos.tipoClave,
-            onCancelar = viewModel::onCerrarRegistro,
-            onGuardar = viewModel::onCerrarRegistro
+            state = registrarState,
+            onTipoChange = registrarViewModel::onTipoChange,
+            onFechaChange = registrarViewModel::onFechaChange,
+            onKmChange = registrarViewModel::onKmChange,
+            onNotasChange = registrarViewModel::onNotasChange,
+            onCancelar = {
+                registrarViewModel.onCancelar()
+                viewModel.onCerrarRegistro()
+            },
+            onGuardar = registrarViewModel::onGuardar
         )
     }
 }
@@ -118,7 +137,7 @@ fun DetalleMantenimientoContent(
                 onClick = onMarcarRealizado,
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Morado, contentColor = Blanco)
+                colors = ButtonDefaults.buttonColors(containerColor = Morado, contentColor = SobreMorado)
             ) {
                 Text("Marcar como realizado", fontWeight = FontWeight.Bold, fontSize = 14.sp)
             }

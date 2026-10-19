@@ -52,6 +52,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.LaunchedEffect
+import com.kilo.kilo.ui.actualizar_km.ActualizarKmViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.common.UiStateContent
 import com.kilo.kilo.ui.common.datosOrNull
@@ -78,9 +80,12 @@ fun InicioPantalla(
     onIrAAjustes: () -> Unit = {},
     onPiezaClick: (PiezaResumen) -> Unit = {},
     viewModel: InicioViewModel = hiltViewModel(),
-    piezasViewModel: PiezasPorCategoriasViewModel = hiltViewModel()
+    piezasViewModel: PiezasPorCategoriasViewModel = hiltViewModel(),
+    actualizarKmViewModel: ActualizarKmViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val piezasUiState by piezasViewModel.uiState.collectAsStateWithLifecycle()
+    val actualizarKmUiState by actualizarKmViewModel.uiState.collectAsStateWithLifecycle()
 
     UiStateContent(uiState) { state ->
         InicioContent(
@@ -99,16 +104,32 @@ fun InicioPantalla(
     }
 
     // Hoja flotante: se muestra sola cuando el ViewModel tiene un estado abierto
-    PiezasPorCategorias(
-        onPiezaClick = { pieza ->
-            piezasViewModel.onCerrar() // cierra la hoja antes de cambiar de pantalla
-            onPiezaClick(pieza)
-        }
-    )
+    piezasUiState.datosOrNull()?.let { piezasState ->
+        PiezasPorCategorias(
+            state = piezasState,
+            onCerrar = piezasViewModel::onCerrar,
+            onPiezaClick = { pieza ->
+                piezasViewModel.onCerrar() // cierra la hoja antes de cambiar de pantalla
+                onPiezaClick(pieza)
+            }
+        )
+    }
 
     // Hoja "Actualizar kilometraje": se abre con el botón "Actualizar km"
     if (uiState.datosOrNull()?.mostrarActualizarKm == true) {
-        ActualizarKmBottomSheet(onDismiss = viewModel::onActualizarKmCerrar)
+        // Evento de una sola vez: cuando se guardó bien, se cierra la hoja
+        LaunchedEffect(Unit) {
+            actualizarKmViewModel.eventos.collect { viewModel.onActualizarKmCerrar() }
+        }
+        ActualizarKmBottomSheet(
+            uiState = actualizarKmUiState,
+            onKmChange = actualizarKmViewModel::onKmChange,
+            onCancelar = {
+                actualizarKmViewModel.onCancelar()
+                viewModel.onActualizarKmCerrar()
+            },
+            onConfirmar = actualizarKmViewModel::onConfirmar
+        )
     }
 }
 
@@ -250,7 +271,7 @@ private fun TarjetaVehiculo(
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Morado,
-                        contentColor = Blanco
+                        contentColor = SobreMorado
                     ),
                     contentPadding = PaddingValues(horizontal = 18.dp, vertical = 12.dp)
                 ) {

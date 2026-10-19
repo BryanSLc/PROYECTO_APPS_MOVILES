@@ -25,7 +25,10 @@ class AgregarVehiculoViewModel @Inject constructor(
     private val repositorio: KiloRepository
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(AgregarVehiculoState())
+    /** Formulario vacío, con las piezas y los intervalos (en km) sugeridos. */
+    private fun estadoInicial() = AgregarVehiculoState(piezas = piezasFormBase())
+
+    private val _state = MutableStateFlow(estadoInicial())
     val state: StateFlow<AgregarVehiculoState> = _state.asStateFlow()
 
     private val _eventos = Channel<AgregarVehiculoEvento>(Channel.BUFFERED)
@@ -116,7 +119,7 @@ class AgregarVehiculoViewModel @Inject constructor(
 
             val ultimo = p.ultimoKm.toIntOrNull()
             if (p.ultimoKm.isNotBlank() && ultimo == null) {
-                return fallo("\"$nombre\": el km del último cambio no es válido")
+                return fallo("\"$nombre\": el kilometraje del último cambio no es válido")
             }
 
             piezas += NuevaPieza(nombre, limite, meses, ultimo)
@@ -139,7 +142,7 @@ class AgregarVehiculoViewModel @Inject constructor(
                 fallo(error)
                 return@launch
             }
-            _state.value = AgregarVehiculoState()
+            _state.value = estadoInicial()
             _eventos.send(AgregarVehiculoEvento.Guardado)
         }
     }

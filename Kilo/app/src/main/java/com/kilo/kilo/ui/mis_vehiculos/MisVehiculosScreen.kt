@@ -38,18 +38,18 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.common.UiStateContent
+import com.kilo.kilo.ui.theme.AmbarProximo
+import com.kilo.kilo.ui.theme.GrisSinDatos
 import com.kilo.kilo.ui.theme.KiloTheme
+import com.kilo.kilo.ui.theme.RojoVencido
+import com.kilo.kilo.ui.theme.VerdeAlDia
 
-private val ColorVencido = Color(0xFFD32F2F)
-private val ColorProximo = Color(0xFFE65100)
-private val ColorAlDia = Color(0xFF2E7D32)
-private val ColorSinDatos = Color(0xFF8E8E93)
-
+@Composable
 private fun EstadoMantenimiento.color(): Color = when (this) {
-    EstadoMantenimiento.VENCIDO -> ColorVencido
-    EstadoMantenimiento.PROXIMO -> ColorProximo
-    EstadoMantenimiento.AL_DIA -> ColorAlDia
-    EstadoMantenimiento.SIN_DATOS -> ColorSinDatos
+    EstadoMantenimiento.VENCIDO -> RojoVencido
+    EstadoMantenimiento.PROXIMO -> AmbarProximo
+    EstadoMantenimiento.AL_DIA -> VerdeAlDia
+    EstadoMantenimiento.SIN_DATOS -> GrisSinDatos
 }
 
 @Composable
@@ -176,7 +176,7 @@ private fun VehiculoItem(
                     Text(
                         text = "${vehiculo.vencidos} vencido(s)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = ColorVencido,
+                        color = RojoVencido,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -209,7 +209,7 @@ private fun VehiculoItem(
                 TextButton(onClick = onEliminar) {
                     Text(
                         text = "Eliminar",
-                        color = ColorVencido,
+                        color = RojoVencido,
                         fontWeight = FontWeight.Bold
                     )
                 }

@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.kilo.kilo.data.CalculoMantenimiento
 import com.kilo.kilo.data.DatosKilo
 import com.kilo.kilo.data.KiloRepository
-import com.kilo.kilo.data.conComas
+import com.kilo.kilo.data.enKm
 import com.kilo.kilo.ui.piezasporcategorias.EstadoPieza
 import com.kilo.kilo.ui.piezasporcategorias.aEstadoPieza
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -52,7 +52,7 @@ private fun construirEstado(datos: DatosKilo, mostrar: Boolean): InicioState {
             nombre = datos.vehiculo.nombre,
             placa = datos.vehiculo.placa,
             carroceria = datos.vehiculo.carroceria,
-            kilometraje = datos.vehiculo.km.conComas() + " km"
+            kilometraje = datos.vehiculo.km.enKm()
         ),
         resumenes = EstadoPieza.values().map { ResumenEstado(it, porEstado[it].orEmpty().size) },
         mostrarActualizarKm = mostrar

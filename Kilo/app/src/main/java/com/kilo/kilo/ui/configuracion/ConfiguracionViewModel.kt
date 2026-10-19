@@ -18,7 +18,7 @@ class ConfiguracionViewModel @Inject constructor(
 ) : ViewModel() {
 
     val uiState: StateFlow<UiState<ConfiguracionState>> = preferencias.preferencias
-        .map { ConfiguracionState(it.notificacionesActivas, it.unidadDistancia) }
+        .map { ConfiguracionState(it.notificacionesActivas, it.temaOscuro) }
         .comoUiState()
         .stateIn(
             scope = viewModelScope,
@@ -30,7 +30,16 @@ class ConfiguracionViewModel @Inject constructor(
         preferencias.setNotificaciones(activas)
     }
 
-    fun onUnidadChange(unidad: String) {
-        preferencias.setUnidadDistancia(unidad)
+    fun onTemaOscuroChange(oscuro: Boolean) {
+        preferencias.setTemaOscuro(oscuro)
     }
-}
+
+    /**
+     * Resultado de pedir el permiso al encender las notificaciones:
+     * si lo concedió se activan; si no, el interruptor se queda apagado.
+     * (El aviso de las piezas próximas lo dispara PrincipalViewModel al ver el cambio.)
+     */
+    fun onPermisoNotificacionesResultado(concedido: Boolean) {
+        preferencias.setNotificaciones(concedido)
+    }
+}

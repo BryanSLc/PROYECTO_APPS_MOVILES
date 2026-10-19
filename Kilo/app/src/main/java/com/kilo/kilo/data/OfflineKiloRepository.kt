@@ -45,7 +45,7 @@ class OfflineKiloRepository @Inject constructor(
     override suspend fun actualizarKm(nuevoKm: Int): String? {
         val v = actual().vehiculo
         if (nuevoKm < v.km) {
-            return "No puede ser menor al actual (${v.km.conComas()} km)"
+            return "No puede ser menor al actual (${v.km.enKm()})"
         }
         dao.actualizarKm(v.id, nuevoKm)
         return null
@@ -145,7 +145,7 @@ class OfflineKiloRepository @Inject constructor(
         if (fecha.isAfter(LocalDate.now())) return "La fecha no puede ser futura"
         if (km < 0) return "El kilometraje no es válido"
         if (km > v.km) {
-            return "No puede ser mayor al kilometraje actual (${v.km.conComas()} km). " +
+            return "No puede ser mayor al kilometraje actual (${v.km.enKm()}). " +
                     "Primero actualiza el kilometraje."
         }
         dao.insertarRegistro(

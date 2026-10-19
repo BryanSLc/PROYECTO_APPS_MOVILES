@@ -76,18 +76,18 @@ class RegistrarMantenimientoViewModel @Inject constructor(
             return fallo("Escribe la fecha como día/mes/año, por ejemplo 13/09/2026")
         }
 
-        val km = actual.kmDelCambio.toIntOrNull()
+        val kmIngresado = actual.kmDelCambio.toIntOrNull()
             ?: return fallo("Escribe el kilometraje del cambio")
 
         viewModelScope.launch {
-            val pieza = repositorio.datos.first().vehiculo.piezas
-                .firstOrNull { it.nombre == actual.tipoSeleccionado }
+            val vehiculo = repositorio.datos.first().vehiculo
+            val pieza = vehiculo.piezas.firstOrNull { it.nombre == actual.tipoSeleccionado }
             if (pieza == null) {
                 fallo("Elige qué se cambió")
                 return@launch
             }
 
-            val error = repositorio.registrarMantenimiento(pieza.id, fecha, km, actual.notas)
+            val error = repositorio.registrarMantenimiento(pieza.id, fecha, kmIngresado, actual.notas)
             if (error != null) {
                 fallo(error)
                 return@launch

@@ -1,7 +1,11 @@
 package com.kilo.kilo
 
+import android.Manifest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.WindowInsets
@@ -18,9 +22,12 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -28,12 +35,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kilo.kilo.notificaciones.tienePermisoNotificaciones
 import com.kilo.kilo.ui.agregar_vehiculo.AgregarVehiculoScreen
+import com.kilo.kilo.ui.common.datosOrNull
 import com.kilo.kilo.ui.configuracion.ConfiguracionScreen
 import com.kilo.kilo.ui.historial.HistorialScreen
 import com.kilo.kilo.ui.inicio.InicioPantalla
 import com.kilo.kilo.ui.mantenimiento.DetalleMantenimientoScreen
 import com.kilo.kilo.ui.mis_vehiculos.MisVehiculosScreen
+import com.kilo.kilo.ui.principal.PrincipalState
+import com.kilo.kilo.ui.principal.PrincipalViewModel
 import com.kilo.kilo.ui.splash.SplashScreen
 import com.kilo.kilo.ui.theme.Fondo
 import com.kilo.kilo.ui.theme.KiloTheme
@@ -43,14 +54,49 @@ import com.kilo.kilo.ui.theme.Superficie
 import com.kilo.kilo.ui.theme.TintaTenue
 import dagger.hilt.android.AndroidEntryPoint
 
+private val TRANSPARENTE = android.graphics.Color.TRANSPARENT
+private val ESCRIM_CLARO = android.graphics.Color.argb(0xE6, 0xFF, 0xFF, 0xFF)
+private val ESCRIM_OSCURO = android.graphics.Color.argb(0x80, 0x1B, 0x1B, 0x1B)
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    /** Lo pide Hilt; la actividad solo lo usa para leer el tema y el permiso de notificaciones. */
+    private val viewModel: PrincipalViewModel by viewModels()
+
+    private val pedirPermisoNotificaciones = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { concedido -> viewModel.onPermisoNotificacionesResultado(concedido) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            KiloTheme {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val estado = uiState.datosOrNull() ?: PrincipalState()
+
+            // Los íconos de las barras del sistema siguen el tema de la app, no el del teléfono
+            DisposableEffect(estado.temaOscuro) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(TRANSPARENTE, TRANSPARENTE) { estado.temaOscuro },
+                    navigationBarStyle = SystemBarStyle.auto(ESCRIM_CLARO, ESCRIM_OSCURO) { estado.temaOscuro }
+                )
+                onDispose { }
+            }
+
+            // Primera vez: pide el permiso para poder mostrar los avisos de mantenimiento
+            LaunchedEffect(estado.debePedirPermisoNotificaciones) {
+                if (estado.debePedirPermisoNotificaciones) {
+                    viewModel.onPermisoNotificacionesSolicitado()
+                    if (this@MainActivity.tienePermisoNotificaciones()) {
+                        viewModel.onPermisoNotificacionesResultado(true)
+                    } else {
+                        pedirPermisoNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                }
+            }
+
+            KiloTheme(temaOscuro = estado.temaOscuro) {
                 KiloNavHost()
             }
         }

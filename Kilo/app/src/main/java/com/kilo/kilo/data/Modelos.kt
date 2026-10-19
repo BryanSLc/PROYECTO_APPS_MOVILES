@@ -19,12 +19,14 @@ data class Pieza(
     val intervaloKm: Int,
     val intervaloMeses: Int? = null
 ) {
-    val descripcionIntervalo: String
-        get() = if (intervaloMeses != null) {
-            "Cada ${intervaloKm.conComas()} km o $intervaloMeses meses, lo que ocurra primero"
+    fun descripcionIntervalo(): String {
+        val distancia = intervaloKm.enKm()
+        return if (intervaloMeses != null) {
+            "Cada $distancia o $intervaloMeses meses, lo que ocurra primero"
         } else {
-            "Cada ${intervaloKm.conComas()} km"
+            "Cada $distancia"
         }
+    }
 }
 
 /** Piezas sugeridas al agregar un vehículo (el usuario puede editarlas, quitarlas o agregar otras). */
@@ -99,22 +101,25 @@ data class EstadoDePieza(
     val progreso: Float,
     val limitaPorTiempo: Boolean
 ) {
-    val detalle: String
-        get() = when (situacion) {
+    fun detalle(): String =
+        when (situacion) {
             Situacion.SIN_DATOS -> "Sin registro"
             Situacion.VENCIDO ->
                 if (limitaPorTiempo && fechaLimite != null) "Venció el ${fechaLimite.formatoCorto()}"
-                else if ((kmRestantes ?: 0) < 0) "${abs(kmRestantes ?: 0).conComas()} km de retraso"
+                else if ((kmRestantes ?: 0) < 0) "${abs(kmRestantes ?: 0).enKm()} de retraso"
                 else "Llegó a su límite de km"
             else ->
                 if (limitaPorTiempo && fechaLimite != null) "Antes del ${fechaLimite.formatoCorto()}"
-                else "Faltan ${(kmRestantes ?: 0).conComas()} km"
+                else "Faltan ${(kmRestantes ?: 0).enKm()}"
         }
 }
 
 // ---------------- Formatos de texto
 
 fun Int.conComas(): String = String.format(Locale.US, "%,d", this)
+
+/** Distancia siempre en kilómetros: 68450 -> "68,450 km". */
+fun Int.enKm(): String = "${conComas()} km"
 
 private val FORMATO_CORTO = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es"))
 

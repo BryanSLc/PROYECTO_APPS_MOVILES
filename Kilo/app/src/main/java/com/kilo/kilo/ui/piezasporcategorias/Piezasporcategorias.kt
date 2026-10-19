@@ -34,28 +34,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kilo.kilo.ui.common.datosOrNull
 import com.kilo.kilo.ui.theme.*
 
 /**
  * Hoja flotante que se abre al tocar cualquiera de las 4 tarjetas del dashboard.
- * Compartes el mismo ViewModel con InicioPantalla (ver instrucciones).
+ * Es una vista sin estado: recibe el estado y las lambdas; el ViewModel vive en InicioPantalla.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PiezasPorCategorias(
-    onPiezaClick: (PiezaResumen) -> Unit = {},
-    viewModel: PiezasPorCategoriasViewModel = hiltViewModel()
+    state: PiezasPorCategoriasState,
+    onCerrar: () -> Unit,
+    onPiezaClick: (PiezaResumen) -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    // La hoja solo se dibuja cuando hay datos y una categoría abierta
-    val state = uiState.datosOrNull() ?: return
+    // La hoja solo se dibuja cuando hay una categoría abierta
     val estado = state.estadoAbierto ?: return
 
     ModalBottomSheet(
-        onDismissRequest = viewModel::onCerrar,
+        onDismissRequest = onCerrar,
         sheetState = rememberModalBottomSheetState(),
         containerColor = Superficie,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -63,7 +60,7 @@ fun PiezasPorCategorias(
         PiezasPorCategoriasContent(
             estado = estado,
             piezas = state.piezasVisibles,
-            onCerrar = viewModel::onCerrar,
+            onCerrar = onCerrar,
             onPiezaClick = onPiezaClick
         )
     }

@@ -1,5 +1,6 @@
 package com.kilo.kilo.ui.piezasporcategorias
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.kilo.kilo.data.Situacion
 import com.kilo.kilo.ui.theme.AmbarProximo
@@ -14,14 +15,30 @@ import com.kilo.kilo.ui.theme.VerdeAlDiaFondo
 /** Los 4 estados del dashboard. */
 enum class EstadoPieza(
     val titulo: String,
-    val descripcion: String,
-    val tinta: Color,
-    val fondo: Color
+    val descripcion: String
 ) {
-    VENCIDOS("Vencidos", "Ya superaron su intervalo de km o de tiempo.", RojoVencido, RojoVencidoFondo),
-    PROXIMOS("Próximos", "Están por cumplir su intervalo de km o de tiempo.", AmbarProximo, AmbarProximoFondo),
-    AL_DIA("Al día", "Están dentro de su intervalo de km y de tiempo.", VerdeAlDia, VerdeAlDiaFondo),
-    SIN_DATOS("Sin datos", "Aún no tienen un mantenimiento registrado.", GrisSinDatos, GrisSinDatosFondo)
+    VENCIDOS("Vencidos", "Ya superaron su intervalo de distancia o de tiempo."),
+    PROXIMOS("Próximos", "Están por cumplir su intervalo de distancia o de tiempo."),
+    AL_DIA("Al día", "Están dentro de su intervalo de distancia y de tiempo."),
+    SIN_DATOS("Sin datos", "Aún no tienen un mantenimiento registrado.");
+
+    /** Color del texto y del punto del estado; cambia con el tema claro/oscuro. */
+    val tinta: Color
+        @Composable get() = when (this) {
+            VENCIDOS -> RojoVencido
+            PROXIMOS -> AmbarProximo
+            AL_DIA -> VerdeAlDia
+            SIN_DATOS -> GrisSinDatos
+        }
+
+    /** Color de fondo de la etiqueta del estado; cambia con el tema claro/oscuro. */
+    val fondo: Color
+        @Composable get() = when (this) {
+            VENCIDOS -> RojoVencidoFondo
+            PROXIMOS -> AmbarProximoFondo
+            AL_DIA -> VerdeAlDiaFondo
+            SIN_DATOS -> GrisSinDatosFondo
+        }
 }
 
 /** Une el resultado del cálculo (Situacion) con la categoría que se dibuja (EstadoPieza). */
